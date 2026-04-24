@@ -1,0 +1,161 @@
+{
+	"info": {
+		"name": "Nuvo Delivery Platform V2",
+		"description": "Updated collection with Base Response Structure and Admin API.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "User Management",
+			"item": [
+				{
+					"name": "Get My Profile",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/users/me",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "users", "me"]
+						}
+					}
+				},
+				{
+					"name": "Get My Addresses",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/users/me/addresses",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "users", "me", "addresses"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Store Discovery",
+			"item": [
+				{
+					"name": "Discover Nearby",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/stores?lat=-33.9&lng=18.4&radius=50000",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "stores"],
+							"query": [
+								{ "key": "lat", "value": "-33.9" },
+								{ "key": "lng", "value": "18.4" },
+								{ "key": "radius", "value": "50000" }
+							]
+						}
+					}
+				},
+				{
+					"name": "Get Store Categories",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/stores/{{sampleStoreId}}/categories",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "stores", "{{sampleStoreId}}", "categories"]
+						}
+					}
+				},
+				{
+					"name": "List Store Products",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/stores/{{sampleStoreId}}/products",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "stores", "{{sampleStoreId}}", "products"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Cart & Checkout",
+			"item": [
+				{
+					"name": "View Cart",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/cart",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "cart"]
+						}
+					}
+				},
+				{
+					"name": "Add SKU to Cart",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"skuId\": \"{{sampleSkuId}}\",\n  \"quantity\": 1\n}",
+							"options": { "json": { "language": "json" } }
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/cart/items",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "cart", "items"]
+						}
+					}
+				},
+				{
+					"name": "Checkout",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"addressId\": \"{{sampleAddressId}}\"\n}",
+							"options": { "json": { "language": "json" } }
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/orders",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "orders"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Admin Management",
+			"item": [
+				{
+					"name": "Create Chain",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"New Coffee Chain\",\n  \"description\": \"Premium Arabica coffee\"\n}",
+							"options": { "json": { "language": "json" } }
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/admin/chains",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "admin", "chains"]
+						}
+					}
+				}
+			]
+		}
+	],
+	"auth": {
+		"type": "bearer",
+		"bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }]
+	}
+}

@@ -1,0 +1,42 @@
+-- Carts table
+CREATE TABLE carts (
+    id UUID PRIMARY KEY,
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    store_id UUID REFERENCES stores(id) ON DELETE SET NULL, -- Null if cart is empty
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(user_id) -- One cart per user
+);
+
+-- Cart Items table
+CREATE TABLE cart_items (
+    id UUID PRIMARY KEY,
+    cart_id UUID NOT NULL REFERENCES carts(id) ON DELETE CASCADE,
+    sku_id UUID NOT NULL REFERENCES skus(id) ON DELETE CASCADE,
+    quantity INTEGER NOT NULL CHECK (quantity > 0),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Orders table
+CREATE TABLE orders (
+    id UUID PRIMARY KEY,
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE SET NULL,
+    store_id UUID NOT NULL REFERENCES stores(id) ON DELETE SET NULL,
+    status VARCHAR(50) NOT NULL, -- PENDING, PREPARING, DISPATCHED, DELIVERED, CANCELLED
+    total_amount DECIMAL(19, 2) NOT NULL,
+    delivery_address_snapshot JSONB NOT NULL, -- Historical snapshot of address
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Order Items table
+CREATE TABLE order_items (
+    id UUID PRIMARY KEY,
+    order_id UUID NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
+    sku_id UUID NOT NULL REFERENCES skus(id) ON DELETE SET NULL,
+    snapshot_price DECIMAL(19, 2) NOT NULL, -- Price at the time of order
+    quantity INTEGER NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
