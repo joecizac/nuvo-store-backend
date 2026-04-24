@@ -3,7 +3,9 @@ package com.nuvo.backend.features.order.domain
 import com.nuvo.backend.features.catalog.domain.SKU
 import com.nuvo.backend.features.store.domain.Store
 import com.nuvo.backend.features.user.domain.User
+import org.hibernate.annotations.JdbcTypeCode
 import org.hibernate.annotations.UuidGenerator
+import org.hibernate.type.SqlTypes
 import org.springframework.data.annotation.CreatedDate
 import org.springframework.data.annotation.LastModifiedDate
 import org.springframework.data.jpa.domain.support.AuditingEntityListener
@@ -40,6 +42,7 @@ class Order(
     @Column(name = "total_amount", nullable = false)
     val totalAmount: BigDecimal,
 
+    @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "delivery_address_snapshot", columnDefinition = "jsonb", nullable = false)
     val deliveryAddressSnapshot: String,
 
