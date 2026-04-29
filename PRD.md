@@ -49,6 +49,14 @@ To build a scalable, secure, and robust backend using Kotlin and Spring Boot tha
 ### 3.8 Push Notifications
 *   **Requirement:** Real-time order status updates via Firebase Cloud Messaging (FCM).
 
+### 3.9 Advanced Discovery & Search
+*   **Requirement:** Users must be able to perform global searches and apply granular filters/sorting.
+*   **Global Search:** Single query string to find stores or products across all nearby locations.
+*   **Sorting/Filtering:** Sort by `rating`, `distance`, or `delivery_fee`. Filter by `cuisine`, `price_range`, or `open_now`.
+
+### 3.10 Real-Time Tracking
+*   **Requirement:** Active orders must provide real-time courier coordinates (lat/lng) for live map tracking in the mobile client.
+
 ## 4. Technical Constraints
 *   **Stack:** Kotlin, Spring Boot 3.x, PostgreSQL + PostGIS, Flyway.
 *   **Security:** Stateless Firebase JWT validation.

@@ -1,6 +1,10 @@
 # Kanban Board: Industry-Agnostic Delivery Platform
 
 ## 🔴 TO-DO
+- [ ] **Address Management:** Full CRUD (Edit/Delete) and "Set Default" logic.
+- [ ] **Advanced Discovery:** Implementation of Global Search (`/search`), Ranking (Sort), and Attribute Filtering.
+- [ ] **Engagement Phase 2:** Order-linked Reviews and Paginated Store Feedback.
+- [ ] **Live Tracking:** Real-time courier coordinate endpoint.
 - [ ] **Unit Tests:** Implement JUnit tests for `CartService` (Single Store Rule) and `OrderService` (Total Calculation).
 - [ ] **Image Upload Service:** Integrate with a cloud storage provider for handling logo and product image uploads.
 - [ ] **Logging & Monitoring:** Configure Micrometer and Prometheus for system health tracking.
