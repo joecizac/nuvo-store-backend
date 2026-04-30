@@ -1,17 +1,19 @@
 # Kanban Board: Industry-Agnostic Delivery Platform
-
 ## 🔴 TO-DO
-- [ ] **Address Management:** Full CRUD (Edit/Delete) and "Set Default" logic.
-- [ ] **Advanced Discovery:** Implementation of Global Search (`/search`), Ranking (Sort), and Attribute Filtering.
-- [ ] **Engagement Phase 2:** Order-linked Reviews and Paginated Store Feedback.
-- [ ] **Live Tracking:** Real-time courier coordinate endpoint.
 - [ ] **Unit Tests:** Implement JUnit tests for `CartService` (Single Store Rule) and `OrderService` (Total Calculation).
 - [ ] **Image Upload Service:** Integrate with a cloud storage provider for handling logo and product image uploads.
 - [ ] **Logging & Monitoring:** Configure Micrometer and Prometheus for system health tracking.
 - [ ] **Integration Tests:** Set up Testcontainers with PostGIS to verify spatial repositories.
 
-## 🟡 ENHANCEMENT TASKS
-### 🔴 High Priority
+...
+
+## 🟢 DONE
+### Phase 12: Enhanced Slices
+- [x] **Address Management:** Implemented full CRUD (Edit/Delete) and "Set Default" address logic.
+- [x] **Advanced Discovery:** Added Global Search (`/search`) across stores/products and dynamic Attribute Filtering (Cuisine, Price, Openness).
+- [x] **Engagement Phase 2:** Implemented Order-linked Reviews and Paginated Store Feedback.
+- [x] **Live Tracking:** Added real-time courier coordinate retrieval for active orders.
+
 - [x] **Implement UUIDv7:** Refactored all entity IDs to use native Hibernate UUID v7 (Time-Sorted) for optimal indexing.
 - [x] **Resolve N+1 Queries:** Update Repositories with `@EntityGraph` or `JOIN FETCH`.
 - [x] **DTO Validation:** Add `@Valid` and `jakarta.validation` constraints to all request DTOs.

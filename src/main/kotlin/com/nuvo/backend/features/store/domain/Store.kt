@@ -49,6 +49,21 @@ class Store(
     @Column(name = "average_rating")
     var averageRating: Double = 0.0,
 
+    @Column
+    var cuisine: String? = null,
+
+    @Column(name = "price_range")
+    var priceRange: Int = 1,
+
+    @Column(name = "delivery_fee")
+    var deliveryFee: java.math.BigDecimal = java.math.BigDecimal.ZERO,
+
+    @Column(name = "open_at")
+    var openAt: java.time.LocalTime? = null,
+
+    @Column(name = "close_at")
+    var closeAt: java.time.LocalTime? = null,
+
     @CreatedDate
     @Column(name = "created_at", updatable = false)
     var createdAt: LocalDateTime? = null,

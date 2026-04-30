@@ -83,6 +83,57 @@ class UserService(
         return addressRepository.findAllByUserId(userId).map { it.toDTO() }
     }
 
+    @Transactional
+    fun updateAddress(firebaseUid: String, addressId: UUID, dto: AddressDTO): AddressDTO {
+        val user = userRepository.findByFirebaseUid(firebaseUid) ?: throw ResourceNotFoundException("User not found")
+        val address = addressRepository.findById(addressId).orElseThrow { ResourceNotFoundException("Address not found") }
+        
+        if (address.user.id != user.id) throw ResourceNotFoundException("Address not found for this user")
+
+        address.title = dto.title
+        address.fullAddress = dto.fullAddress
+        address.location = GeometryUtil.createPoint(dto.latitude, dto.longitude)
+        
+        // If updating to default, unset previous default
+        if (dto.isDefault && !address.isDefault) {
+            addressRepository.findByUserIdAndIsDefaultTrue(user.id!!)?.apply {
+                this.isDefault = false
+                addressRepository.save(this)
+            }
+        }
+        address.isDefault = dto.isDefault
+
+        return addressRepository.save(address).toDTO()
+    }
+
+    @Transactional
+    fun deleteAddress(firebaseUid: String, addressId: UUID) {
+        val user = userRepository.findByFirebaseUid(firebaseUid) ?: throw ResourceNotFoundException("User not found")
+        val address = addressRepository.findById(addressId).orElseThrow { ResourceNotFoundException("Address not found") }
+        
+        if (address.user.id != user.id) throw ResourceNotFoundException("Address not found for this user")
+
+        addressRepository.delete(address)
+    }
+
+    @Transactional
+    fun setDefaultAddress(firebaseUid: String, addressId: UUID): AddressDTO {
+        val user = userRepository.findByFirebaseUid(firebaseUid) ?: throw ResourceNotFoundException("User not found")
+        val userId = user.id ?: throw ResourceNotFoundException("User ID missing")
+        val address = addressRepository.findById(addressId).orElseThrow { ResourceNotFoundException("Address not found") }
+        
+        if (address.user.id != userId) throw ResourceNotFoundException("Address not found for this user")
+
+        // Unset old default
+        addressRepository.findByUserIdAndIsDefaultTrue(userId)?.apply {
+            this.isDefault = false
+            addressRepository.save(this)
+        }
+
+        address.isDefault = true
+        return addressRepository.save(address).toDTO()
+    }
+
     private fun User.toDTO() = UserProfileDTO(
         id = id ?: UUID.randomUUID(),
         firebaseUid = firebaseUid,

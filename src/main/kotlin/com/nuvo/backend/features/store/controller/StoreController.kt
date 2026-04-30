@@ -17,16 +17,30 @@ class StoreController(
     private val storeService: StoreService
 ) {
 
+    @GetMapping("/stores/search")
+    @Operation(summary = "Global search", description = "Searches for stores, products, or descriptions across all nearby stores")
+    fun search(
+        @RequestParam lat: Double,
+        @RequestParam lng: Double,
+        @RequestParam(defaultValue = "10000") radius: Double,
+        @RequestParam q: String,
+        pageable: Pageable
+    ): Page<StoreDTO> {
+        return storeService.searchStores(lat, lng, radius, q, pageable)
+    }
+
     @GetMapping("/stores")
-    @Operation(summary = "Discover nearby stores", description = "Finds stores within a specified radius using geographic coordinates")
+    @Operation(summary = "Discover nearby stores", description = "Finds stores within a specified radius using geographic coordinates with optional filters")
     fun getStores(
         @RequestParam lat: Double,
         @RequestParam lng: Double,
         @RequestParam(defaultValue = "10000") radius: Double,
-        @RequestParam(required = false) search: String?,
+        @RequestParam(required = false) cuisine: String?,
+        @RequestParam(required = false) priceRange: Int?,
+        @RequestParam(defaultValue = "false") openNow: Boolean,
         pageable: Pageable
     ): Page<StoreDTO> {
-        return storeService.getNearbyStores(lat, lng, radius, search, pageable)
+        return storeService.getNearbyStoresFiltered(lat, lng, radius, cuisine, priceRange, openNow, pageable)
     }
 
     @GetMapping("/stores/{id}")

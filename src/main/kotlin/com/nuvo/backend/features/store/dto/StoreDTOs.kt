@@ -54,5 +54,20 @@ data class StoreDTO(
     val address: String,
 
     @Schema(description = "Average customer rating (1.0 to 5.0)", example = "4.5")
-    val averageRating: Double
+    val averageRating: Double,
+
+    @Schema(description = "Primary cuisine or industry type", example = "Burgers")
+    val cuisine: String?,
+
+    @Schema(description = "Price range indicator (1-4)", example = "2")
+    val priceRange: Int,
+
+    @Schema(description = "Standard delivery fee", example = "5.99")
+    val deliveryFee: java.math.BigDecimal,
+
+    @Schema(description = "Opening time", example = "09:00")
+    val openAt: String?,
+
+    @Schema(description = "Closing time", example = "22:00")
+    val closeAt: String?
 )

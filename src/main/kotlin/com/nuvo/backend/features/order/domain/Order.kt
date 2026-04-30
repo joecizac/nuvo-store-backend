@@ -46,6 +46,12 @@ class Order(
     @Column(name = "delivery_address_snapshot", columnDefinition = "jsonb", nullable = false)
     val deliveryAddressSnapshot: String,
 
+    @Column(name = "current_lat")
+    var currentLat: Double? = null,
+
+    @Column(name = "current_lng")
+    var currentLng: Double? = null,
+
     @OneToMany(mappedBy = "order", cascade = [CascadeType.ALL])
     val items: MutableList<OrderItem> = mutableListOf(),
 

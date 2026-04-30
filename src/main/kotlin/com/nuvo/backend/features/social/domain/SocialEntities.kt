@@ -1,6 +1,7 @@
 package com.nuvo.backend.features.social.domain
 
 import com.nuvo.backend.features.catalog.domain.Product
+import com.nuvo.backend.features.order.domain.Order
 import com.nuvo.backend.features.store.domain.Store
 import com.nuvo.backend.features.user.domain.User
 import org.hibernate.annotations.UuidGenerator
@@ -28,6 +29,10 @@ class Review(
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "store_id", nullable = false)
     val store: Store,
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "order_id")
+    val order: Order? = null,
 
     @Column(nullable = false)
     var rating: Int,

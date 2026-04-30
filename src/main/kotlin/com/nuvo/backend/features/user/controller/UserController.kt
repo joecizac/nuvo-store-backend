@@ -46,4 +46,26 @@ class UserController(
     fun addAddress(principal: Principal, @Valid @RequestBody dto: AddressDTO): AddressDTO {
         return userService.addAddress(principal.name, dto)
     }
+
+    @PutMapping("/me/addresses/{id}")
+    @Operation(summary = "Update address", description = "Edits an existing delivery address")
+    fun updateAddress(
+        principal: Principal,
+        @PathVariable id: UUID,
+        @Valid @RequestBody dto: AddressDTO
+    ): AddressDTO {
+        return userService.updateAddress(principal.name, id, dto)
+    }
+
+    @DeleteMapping("/me/addresses/{id}")
+    @Operation(summary = "Remove address", description = "Deletes a delivery address from the user profile")
+    fun deleteAddress(principal: Principal, @PathVariable id: UUID) {
+        userService.deleteAddress(principal.name, id)
+    }
+
+    @PatchMapping("/me/addresses/{id}/default")
+    @Operation(summary = "Set default address", description = "Sets a specific address as the primary delivery location")
+    fun setDefaultAddress(principal: Principal, @PathVariable id: UUID): AddressDTO {
+        return userService.setDefaultAddress(principal.name, id)
+    }
 }

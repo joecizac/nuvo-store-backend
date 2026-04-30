@@ -1,0 +1,5 @@
+ALTER TABLE stores ADD COLUMN cuisine VARCHAR(100);
+ALTER TABLE stores ADD COLUMN price_range INTEGER DEFAULT 1; -- 1 to 4 ($ to $$$$)
+ALTER TABLE stores ADD COLUMN delivery_fee DECIMAL(19, 2) DEFAULT 0.00;
+ALTER TABLE stores ADD COLUMN open_at TIME;
+ALTER TABLE stores ADD COLUMN close_at TIME;

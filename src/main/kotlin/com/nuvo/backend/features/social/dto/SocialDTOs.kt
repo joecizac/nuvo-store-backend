@@ -6,6 +6,7 @@ data class ReviewDTO(
     val id: UUID,
     val userId: UUID,
     val userName: String,
+    val orderId: UUID?,
     val rating: Int,
     val comment: String?,
     val createdAt: String
