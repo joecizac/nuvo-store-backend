@@ -1,6 +1,7 @@
 package com.nuvo.backend.features.social.service
 
 import com.nuvo.backend.common.exception.ResourceNotFoundException
+import com.nuvo.backend.common.exception.UnauthorizedException
 import com.nuvo.backend.features.catalog.repository.ProductRepository
 import com.nuvo.backend.features.order.repository.OrderRepository
 import com.nuvo.backend.features.social.domain.*
@@ -53,7 +54,7 @@ class SocialService(
         val user = userRepository.findByFirebaseUid(firebaseUid) ?: throw ResourceNotFoundException("User not found")
         val order = orderRepository.findById(orderId).orElseThrow { ResourceNotFoundException("Order not found") }
 
-        if (order.user?.id != user.id) throw ResourceNotFoundException("Order not found for this user")
+        if (order.user?.id != user.id) throw UnauthorizedException("You are not authorized to review this order")
         val store = order.store ?: throw ResourceNotFoundException("Store not found for this order")
 
         val userId = user.id ?: throw ResourceNotFoundException("User ID missing")
@@ -94,7 +95,7 @@ class SocialService(
         val user = userRepository.findByFirebaseUid(firebaseUid) ?: throw ResourceNotFoundException("User not found")
         val order = orderRepository.findById(orderId).orElseThrow { ResourceNotFoundException("Order not found") }
         
-        if (order.user?.id != user.id) throw ResourceNotFoundException("Order not found for this user")
+        if (order.user?.id != user.id) throw UnauthorizedException("You are not authorized to track this order")
 
         return mapOf(
             "lat" to order.currentLat,

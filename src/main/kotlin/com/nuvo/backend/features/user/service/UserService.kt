@@ -112,6 +112,7 @@ class UserService(
         val address = addressRepository.findById(addressId).orElseThrow { ResourceNotFoundException("Address not found") }
         
         if (address.user.id != user.id) throw ResourceNotFoundException("Address not found for this user")
+        if (address.isDefault) throw com.nuvo.backend.common.exception.ValidationException("Cannot delete your default address. Set another address as default first.")
 
         addressRepository.delete(address)
     }
