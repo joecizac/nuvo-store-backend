@@ -7,19 +7,21 @@
 
 ...
 
+## 🟡 IN-PROGRESS
+- [ ] *Select a new task to begin...*
+
 ## 🟢 DONE
-### Phase 12: Enhanced Slices
+### Phase 12: Enhanced Slices (2026-04-30)
 - [x] **Address Management:** Implemented full CRUD (Edit/Delete) and "Set Default" address logic.
 - [x] **Advanced Discovery:** Added Global Search (`/search`) across stores/products and dynamic Attribute Filtering (Cuisine, Price, Openness).
 - [x] **Engagement Phase 2:** Implemented Order-linked Reviews and Paginated Store Feedback.
 - [x] **Live Tracking:** Added real-time courier coordinate retrieval for active orders.
-
 - [x] **Implement UUIDv7:** Refactored all entity IDs to use native Hibernate UUID v7 (Time-Sorted) for optimal indexing.
 - [x] **Resolve N+1 Queries:** Update Repositories with `@EntityGraph` or `JOIN FETCH`.
 - [x] **DTO Validation:** Add `@Valid` and `jakarta.validation` constraints to all request DTOs.
 - [x] **Async Notifications:** Refactored `NotificationService` to be event-driven and non-blocking using `@EventListener` and `@Async`.
 
-### 🟡 Medium Priority
+### Technical Debt & Enhancements (2026-04-30)
 - [x] **Custom Exception Hierarchy:** Implement specific exceptions and map them in `GlobalExceptionHandler`.
 - [x] **JPA Auditing:** Enabled `@EnableJpaAuditing` and automated timestamps across all entities.
 - [x] **Security Lockdown:** Restricted CORS and secured non-public Actuator endpoints.
@@ -27,10 +29,6 @@
 - [x] **API Documentation (Enhanced):** Updated Swagger annotations with detailed request/response examples and schemas.
 - [x] **Spring Cache:** Implemented `@Cacheable` for read-heavy store and catalog retrieval methods.
 
-## 🟡 IN-PROGRESS
-- [ ] *Select a new task to begin...*
-
-## 🟢 DONE
 ### Phase 11: Testing & Data Integrity
 - [x] **Comprehensive Data Seeding:** Updated `DataSeeder` to include Mock Users, Addresses, and initial Reviews.
 - [x] **Database Refresh:** Performed a clean volume wipe and restart to verify full end-to-end data integrity.

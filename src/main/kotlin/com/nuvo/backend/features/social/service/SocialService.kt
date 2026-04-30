@@ -137,6 +137,7 @@ class SocialService(
         id = id ?: UUID.randomUUID(),
         userId = user.id ?: UUID.randomUUID(),
         userName = user.name,
+        orderId = order?.id,
         rating = rating,
         comment = comment,
         createdAt = createdAt.toString()

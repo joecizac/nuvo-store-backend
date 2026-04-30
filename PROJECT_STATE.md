@@ -25,19 +25,25 @@ The system is a production-grade, industry-agnostic delivery backend built with 
 *   **Catalog Scope:** We pivoted from "Global Categories" to **"Store-wise Hierarchies."** This change was essential to support true industry-agnosticism, allowing a Grocery store and a fashion boutique to exist on the same platform with completely different category structures.
 *   **Mock Security:** To facilitate rapid local learning and testing, we implemented a `mock-mode` property. This allows developers to bypass the Firebase Admin SDK requirement while still populating a `SecurityContext` with a valid mock user.
 
-## 5. Recent Progress (2026-04-24)
-*   **Source Control:** Repository initialized with optimized `.gitignore`. Remote configured (SSH) and code pushed to GitHub `main` branch.
-*   **Bug Fix:** Resolved `Internal Server Error` during checkout caused by JSONB type mismatch in the `Order` entity.
-*   **Validation:** Conducted manual API testing suite. Verified User, Discovery, Catalog, Cart (Single Store Rule), and Order flows are functional.
+## 5. Recent Progress (2026-04-30)
+*   **Phase 12 (Enhanced Slices):**
+    *   **Address Management:** Implemented full CRUD (Edit/Delete) and "Set Default" logic with ownership validation.
+    *   **Advanced Discovery:** Added global `/search` and dynamic attribute filtering (Cuisine, Price, Openness).
+    *   **Engagement:** Implemented order-linked Reviews and paginated Store Feedback.
+    *   **Live Tracking:** Added real-time courier coordinate retrieval for active orders.
+*   **Technical Excellence & Scalability:**
+    *   **UUIDv7 Migration:** Refactored all entity IDs to native Hibernate UUID v7 for optimal time-sorted indexing.
+    *   **Performance:** Resolved N+1 query overhead using `@EntityGraph` and implemented Spring Cache for read-heavy discovery.
+    *   **Robustness:** Integrated `jakarta.validation` for all request DTOs and implemented a custom Exception hierarchy.
+    *   **Async Core:** Refactored `NotificationService` to be fully event-driven and non-blocking.
+*   **Security & Documentation:** Locked down CORS, secured Actuator endpoints, and enhanced Swagger UI with detailed schemas.
 
 ## 6. Pending Roadmap
-1.  **Address Management:** Expand API to support Edit, Delete, and "Default" address toggling.
-2.  **Advanced Discovery:** Implement global cross-entity search and complex sorting/filtering logic.
-3.  **Engagement & Tracking:** Add Order Reviews and Real-Time courier location tracking.
-4.  **Unit Testing (High Priority):** Implement JUnit/Mockito tests for `CartService` (Single-store rule enforcement) and `OrderService` (Total calculation logic).
-5.  **Image Upload Service:** Create a unified `FileStorageService` to handle binary uploads for store logos and product images.
-6.  **Integration Testing:** Set up **Testcontainers** with a PostGIS image to verify spatial repository logic in a real database environment.
-7.  **Admin RBAC:** Implement Role-Based Access Control to distinguish between `ROLE_USER` and `ROLE_ADMIN` using Firebase custom claims.
+1.  **Unit Testing (High Priority):** Implement JUnit/Mockito tests for `CartService` (Single-store rule enforcement) and `OrderService` (Total calculation logic).
+2.  **Image Upload Service:** Create a unified `FileStorageService` (AWS S3 or Cloudinary) to handle binary uploads for store logos and product images.
+3.  **Integration Testing:** Set up **Testcontainers** with a PostGIS image to verify spatial repository logic in a real database environment.
+4.  **Admin RBAC:** Implement Role-Based Access Control to distinguish between `ROLE_USER` and `ROLE_ADMIN` using Firebase custom claims.
+5.  **Logging & Monitoring:** Configure Micrometer and Prometheus for system health and performance tracking.
 
 ## 7. Context Injection (The TL;DR)
 This project is an industry-agnostic delivery platform (Kotlin/Spring Boot 4) designed for extreme scalability and performance. It features a PostGIS-powered discovery engine and a store-specific catalog hierarchy that can support anything from food to pharmacy. The backend is currently in a "stable-ready" state with a comprehensive data seeder, automated auditing, and a standardized API response structure. 
