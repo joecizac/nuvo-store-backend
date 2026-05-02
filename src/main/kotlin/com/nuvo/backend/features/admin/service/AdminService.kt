@@ -8,6 +8,7 @@ import com.nuvo.backend.features.catalog.repository.*
 import com.nuvo.backend.features.store.domain.*
 import com.nuvo.backend.features.store.repository.*
 import org.springframework.cache.annotation.CacheEvict
+import org.springframework.cache.annotation.Caching
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.util.*
@@ -100,7 +101,12 @@ class AdminService(
     }
 
     @Transactional
-    @CacheEvict(value = ["product_details"], key = "#productId")
+    @Caching(
+        evict = [
+            CacheEvict(value = ["product_details"], key = "#productId"),
+            CacheEvict(value = ["store_products"], allEntries = true)
+        ]
+    )
     fun createSku(productId: UUID, request: AdminSkuRequest): SKU {
         val product = productRepository.findById(productId).orElseThrow { ResourceNotFoundException("Product not found") }
         return skuRepository.save(

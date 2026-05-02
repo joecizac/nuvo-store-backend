@@ -16,7 +16,6 @@ import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
-import java.time.LocalDateTime
 import java.util.*
 
 @Service
@@ -58,10 +57,11 @@ class SocialService(
         val store = order.store ?: throw ResourceNotFoundException("Store not found for this order")
 
         val userId = user.id ?: throw ResourceNotFoundException("User ID missing")
-        val review = reviewRepository.findByUserIdAndOrderId(userId, orderId)
+        val review = reviewRepository.findByUserIdAndStoreId(userId, store.id!!)
             ?.apply {
                 this.rating = request.rating
                 this.comment = request.comment
+                this.order = order
             }
             ?: Review(user = user, store = store, order = order, rating = request.rating, comment = request.comment)
 

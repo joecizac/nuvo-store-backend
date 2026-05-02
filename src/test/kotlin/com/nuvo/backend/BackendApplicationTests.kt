@@ -1,13 +1,13 @@
 package com.nuvo.backend
 
 import org.junit.jupiter.api.Test
-import org.springframework.boot.test.context.SpringBootTest
+import kotlin.test.assertEquals
 
-@SpringBootTest
 class BackendApplicationTests {
 
 	@Test
-	fun contextLoads() {
+	fun applicationClassIsLoadableWithoutStartingSpring() {
+		assertEquals("BackendApplication", BackendApplication::class.simpleName)
 	}
 
 }

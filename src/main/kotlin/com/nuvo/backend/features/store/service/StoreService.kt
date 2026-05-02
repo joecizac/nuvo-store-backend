@@ -2,20 +2,15 @@ package com.nuvo.backend.features.store.service
 
 import com.nuvo.backend.common.exception.ResourceNotFoundException
 import com.nuvo.backend.common.util.GeometryUtil
-import com.nuvo.backend.features.catalog.repository.ProductRepository
-import com.nuvo.backend.features.order.repository.OrderRepository
 import com.nuvo.backend.features.store.domain.Chain
 import com.nuvo.backend.features.store.domain.Store
 import com.nuvo.backend.features.store.dto.ChainDTO
 import com.nuvo.backend.features.store.dto.StoreDTO
 import com.nuvo.backend.features.store.repository.ChainRepository
 import com.nuvo.backend.features.store.repository.StoreRepository
-import com.nuvo.backend.features.store.repository.StoreSpecifications
-import com.nuvo.backend.features.user.repository.UserRepository
 import org.springframework.cache.annotation.Cacheable
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
-import org.springframework.data.jpa.domain.Specification
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.util.*
@@ -23,10 +18,7 @@ import java.util.*
 @Service
 class StoreService(
     private val storeRepository: StoreRepository,
-    private val chainRepository: ChainRepository,
-    private val userRepository: UserRepository,
-    private val productRepository: ProductRepository,
-    private val orderRepository: OrderRepository
+    private val chainRepository: ChainRepository
 ) {
 
     @Transactional(readOnly = true)
@@ -40,14 +32,8 @@ class StoreService(
         pageable: Pageable
     ): Page<StoreDTO> {
         val point = GeometryUtil.createPoint(latitude, longitude)
-        var spec = StoreSpecifications.isNearby(point, radiusInMeters)
-            .and(StoreSpecifications.isActive())
-
-        if (cuisine != null) spec = spec.and(StoreSpecifications.hasCuisine(cuisine))
-        if (priceRange != null) spec = spec.and(StoreSpecifications.hasPriceRange(priceRange))
-        if (openNow) spec = spec.and(StoreSpecifications.isOpenNow())
-
-        return storeRepository.findAll(spec, pageable).map { it.toDTO() }
+        return storeRepository.findNearbyStoresFiltered(point, radiusInMeters, cuisine, priceRange, openNow, pageable)
+            .map { it.toDTO() }
     }
 
     @Transactional(readOnly = true)

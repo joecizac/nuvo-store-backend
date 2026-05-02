@@ -24,34 +24,54 @@ class FirebaseAuthenticationFilter(
         response: HttpServletResponse,
         filterChain: FilterChain
     ) {
+        val authHeader = request.getHeader("Authorization")
+
         if (mockMode) {
-            val authentication = UsernamePasswordAuthenticationToken(
-                "mock-user-id",
-                null,
-                listOf(SimpleGrantedAuthority("ROLE_USER"))
-            )
-            SecurityContextHolder.getContext().authentication = authentication
+            if (authHeader != null && authHeader.startsWith("Bearer ")) {
+                val token = authHeader.substring(7)
+                val authorities = mutableListOf(SimpleGrantedAuthority("ROLE_USER"))
+                if (token == "admin" || token == "mock-admin" || request.getHeader("X-Mock-Admin") == "true") {
+                    authorities.add(SimpleGrantedAuthority("ROLE_ADMIN"))
+                }
+                val authentication = UsernamePasswordAuthenticationToken(
+                    "mock-user-id",
+                    null,
+                    authorities
+                )
+                authentication.details = WebAuthenticationDetailsSource().buildDetails(request)
+                SecurityContextHolder.getContext().authentication = authentication
+            }
             filterChain.doFilter(request, response)
             return
         }
 
-        val authHeader = request.getHeader("Authorization")
         if (authHeader != null && authHeader.startsWith("Bearer ") && firebaseAuth != null) {
             val idToken = authHeader.substring(7)
             try {
                 val decodedToken = firebaseAuth.verifyIdToken(idToken)
                 val uid = decodedToken.uid
+                val authorities = mutableListOf(SimpleGrantedAuthority("ROLE_USER"))
+                val adminClaim = decodedToken.claims["admin"] as? Boolean == true
+                val roleClaim = decodedToken.claims["role"]?.toString()
+                val rolesClaim = decodedToken.claims["roles"] as? Collection<*>
+                if (
+                    adminClaim ||
+                    roleClaim.equals("ADMIN", ignoreCase = true) ||
+                    rolesClaim?.any { it.toString().equals("ADMIN", ignoreCase = true) } == true
+                ) {
+                    authorities.add(SimpleGrantedAuthority("ROLE_ADMIN"))
+                }
 
                 val authentication = UsernamePasswordAuthenticationToken(
-                    uid, // Principal is the Firebase UID
+                    uid,
                     null,
-                    listOf(SimpleGrantedAuthority("ROLE_USER"))
+                    authorities
                 )
                 authentication.details = WebAuthenticationDetailsSource().buildDetails(request)
                 SecurityContextHolder.getContext().authentication = authentication
 
             } catch (e: FirebaseAuthException) {
-                logger.error("Firebase auth failed: \${e.message}")
+                logger.error("Firebase auth failed: ${e.message}")
             }
         }
 

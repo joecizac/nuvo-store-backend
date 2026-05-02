@@ -70,5 +70,51 @@ interface StoreRepository : JpaRepository<Store, UUID>, JpaSpecificationExecutor
         pageable: Pageable
     ): Page<Store>
 
+    @Query(
+        value = """
+        SELECT * FROM stores s
+        WHERE ST_DWithin(CAST(s.location AS geography), CAST(:point AS geography), :radius)
+        AND s.is_active = true
+        AND (:cuisine IS NULL OR LOWER(s.cuisine) = LOWER(CAST(:cuisine AS text)))
+        AND (:priceRange IS NULL OR s.price_range = :priceRange)
+        AND (
+            :openNow = false OR (
+                s.open_at IS NOT NULL
+                AND s.close_at IS NOT NULL
+                AND (
+                    (s.open_at <= s.close_at AND LOCALTIME BETWEEN s.open_at AND s.close_at)
+                    OR (s.open_at > s.close_at AND (LOCALTIME >= s.open_at OR LOCALTIME <= s.close_at))
+                )
+            )
+        )
+        """,
+        countQuery = """
+        SELECT count(*) FROM stores s
+        WHERE ST_DWithin(CAST(s.location AS geography), CAST(:point AS geography), :radius)
+        AND s.is_active = true
+        AND (:cuisine IS NULL OR LOWER(s.cuisine) = LOWER(CAST(:cuisine AS text)))
+        AND (:priceRange IS NULL OR s.price_range = :priceRange)
+        AND (
+            :openNow = false OR (
+                s.open_at IS NOT NULL
+                AND s.close_at IS NOT NULL
+                AND (
+                    (s.open_at <= s.close_at AND LOCALTIME BETWEEN s.open_at AND s.close_at)
+                    OR (s.open_at > s.close_at AND (LOCALTIME >= s.open_at OR LOCALTIME <= s.close_at))
+                )
+            )
+        )
+        """,
+        nativeQuery = true
+    )
+    fun findNearbyStoresFiltered(
+        @Param("point") point: Point,
+        @Param("radius") radiusInMeters: Double,
+        @Param("cuisine") cuisine: String?,
+        @Param("priceRange") priceRange: Int?,
+        @Param("openNow") openNow: Boolean,
+        pageable: Pageable
+    ): Page<Store>
+
     fun findAllByChainId(chainId: UUID): List<Store>
 }

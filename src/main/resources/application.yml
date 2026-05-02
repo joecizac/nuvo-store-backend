@@ -28,6 +28,6 @@ server:
   forward-headers-strategy: native
 
 nuvo:
-  mock-mode: ${MOCK_MODE:true}
+  mock-mode: ${MOCK_MODE:false}
   cors:
     allowed-origins: ${CORS_ALLOWED_ORIGINS:*}
