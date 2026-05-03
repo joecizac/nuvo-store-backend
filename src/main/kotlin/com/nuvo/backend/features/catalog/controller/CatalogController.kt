@@ -30,7 +30,10 @@ class CatalogController(
     }
 
     @GetMapping("/stores/{storeId}/products")
-    @Operation(summary = "List store products", description = "Returns a paginated list of products for a store, optionally filtered by sub-category")
+    @Operation(
+        summary = "List public store products",
+        description = "Returns customer-visible products for a store. Only ACTIVE products with product availability enabled and at least one available SKU are returned. Product pricing is provided through priceSummary and is derived from available SKUs only."
+    )
     fun getStoreProducts(
         @PathVariable storeId: UUID,
         @RequestParam(required = false) subCategoryId: UUID?,
@@ -40,7 +43,10 @@ class CatalogController(
     }
 
     @GetMapping("/products/{productId}")
-    @Operation(summary = "Get product details", description = "Retrieves comprehensive information for a specific product, including all available SKUs")
+    @Operation(
+        summary = "Get public product details",
+        description = "Retrieves a customer-visible ACTIVE product with available SKUs. Draft, archived, unavailable, or SKU-less products are treated as not found for public APIs."
+    )
     fun getProduct(@PathVariable productId: UUID): ProductDTO {
         return catalogService.getProduct(productId)
     }

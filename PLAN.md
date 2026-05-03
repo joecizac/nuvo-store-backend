@@ -1,77 +1,142 @@
-# Implementation Plan: Delivery Platform Backend (HLD)
+# Implementation Plan (LLD): Nuvo Delivery Backend
 
-## 1. Objective
-Develop a scalable, secure, and robust backend server in Kotlin and Spring Boot 4.x using a **Vertical Slice Architecture**, optimized for high-performance spatial discovery and transactional integrity.
+## 1. Architecture
+- **Runtime:** Kotlin 2.2.x, Java 17, Spring Boot 4.0.x.
+- **Architecture style:** Vertical slices by feature: User, Store, Catalog, Order, Social, Admin.
+- **Database:** PostgreSQL 15+ with PostGIS.
+- **Migrations:** Flyway, currently through `V10__Product_Status.sql`.
+- **Persistence:** Hibernate ORM 7, JPA repositories, PostGIS spatial queries, entity graphs for high-risk N+1 paths.
+- **Security:** Stateless Spring Security filter validating Firebase JWTs; mock mode for local development.
+- **API standard:** `GlobalResponseWrapper` wraps ordinary controller responses into `ApiResponse(success, data, message, errorCode)`.
 
-## 2. System Architecture
-*   **Framework:** Spring Boot 4.x (Kotlin 2.x)
-*   **Database:** PostgreSQL 15+ with **PostGIS** extension.
-*   **Persistence:** Hibernate 7 with native **UUID v7** (Time-Ordered) support.
-*   **Migrations:** Flyway.
-*   **Caching:** Spring Cache (In-memory/Caffeine) for catalog read optimization.
-*   **Auth:** Firebase Admin SDK with a custom stateless JWT filter and local **Mock Mode** support.
-*   **API Standard:** Unified JSON responses via `ResponseBodyAdvice`.
+## 2. Domain Model
 
-## 3. Detailed Domain Models
-All identifiers are Hibernate-managed **UUID v7** (Time-Sorted).
+### 2.1 Identity
+- `User`: Firebase UID, email, name, phone, profile image URL, FCM token.
+- `UserAddress`: user, title, full address, PostGIS point, default flag.
+- Address ownership is validated for update/delete/default operations.
 
-### 3.1 Identity & Profile
-*   **User:** `id`, `firebaseUid` (unique), `email`, `name`, `phoneNumber`, `profileImageUrl`, `fcmToken`, `createdAt`, `updatedAt`.
-*   **UserAddress:** `id`, `user_id`, `title`, `fullAddress`, `location` (Point/4326), `isDefault`, `createdAt`, `updatedAt`.
+### 2.2 Store Discovery
+- `Chain`: shared brand metadata.
+- `Store`: optional `chain_id`, location, address, active flag, rating, cuisine/industry metadata, price range, delivery fee, opening hours.
+- Independent stores have `chain_id = null`.
+- Deleting a chain sets store `chain_id` to null rather than deleting stores.
+- Spatial queries use PostGIS `ST_DWithin` with geography casting for meter-based distance.
 
-### 3.2 Discovery (Chain & Store)
-*   **Chain:** `id`, `name`, `description`, `logoUrl`, `bannerUrl`, `createdAt`, `updatedAt`.
-*   **Store:** `id`, `chain_id` (nullable), `name`, `description`, `contactNumber`, `logoUrl`, `bannerUrl`, `location` (Point/4326), `address`, `isActive`, `averageRating`, `createdAt`, `updatedAt`.
+### 2.3 Catalog
+- Store-owned hierarchy:
+  `Store -> Category -> SubCategory -> Product -> SKU`
+- `Category.store_id` is required.
+- `SubCategory.category_id` is required.
+- `Product.store_id` and `Product.sub_category_id` are required.
+- Service logic validates product store consistency against `subCategory.category.store`.
+- `SKU.product_id` is required and stores price/availability.
 
-### 3.3 Catalog (Store-Specific)
-*   **Category:** `id`, `store_id`, `name`, `imageUrl`, `createdAt`, `updatedAt`.
-*   **SubCategory:** `id`, `category_id`, `name`, `createdAt`, `updatedAt`.
-*   **Product:** `id`, `store_id`, `sub_category_id`, `name`, `description`, `imageUrl`, `isAvailable`, `createdAt`, `updatedAt`.
-*   **SKU:** `id`, `product_id`, `name`, `imageUrl`, `originalPrice`, `discountedPrice`, `isAvailable`, `createdAt`, `updatedAt`.
+### 2.4 Product Lifecycle
+- `ProductStatus`: `DRAFT`, `ACTIVE`, `ARCHIVED`.
+- New products are created as `DRAFT`.
+- SKUs are created separately through admin APIs.
+- Product activation endpoint:
+  `PATCH /api/v1/admin/products/{productId}/activate`
+- Activation validations:
+  - product exists
+  - product's sub-category belongs to the product's store
+  - product has at least one SKU
+  - at least one SKU is available
+  - original price is greater than zero
+  - discounted price, when present, is greater than zero and not greater than original price
+- Public product endpoints query only `ACTIVE`, available products that have available SKUs.
 
-### 3.4 Cart & Orders
-*   **Cart:** `id`, `user_id`, `store_id`, `createdAt`, `updatedAt`. (One cart per user).
-*   **CartItem:** `id`, `cart_id`, `sku_id`, `quantity`, `createdAt`, `updatedAt`.
-*   **Order:** `id`, `user_id`, `store_id`, `status` (Enum), `totalAmount`, `deliveryAddressSnapshot` (JSONB), `createdAt`, `updatedAt`.
-*   **OrderItem:** `id`, `order_id`, `sku_id`, `snapshotPrice`, `quantity`, `createdAt`.
+### 2.5 Product Pricing
+- Product price is derived from available SKUs and is not stored on `products`.
+- Effective SKU price: `discountedPrice ?: originalPrice`.
+- API price values are integer minor units.
+- `ProductDTO.priceSummary`:
+  - `minPrice`
+  - `maxPrice`
+  - `displayPrice`
+  - `hasPriceRange`
+  - `currency`
+- `priceCents` has been removed from product responses.
+- Public product DTOs include only available SKUs.
 
-### 3.5 Social
-*   **Review:** `id`, `user_id`, `store_id`, `rating` (1-5), `comment`, `createdAt`, `updatedAt`.
-*   **FavouriteStore:** `user_id`, `store_id` (Composite PK).
-*   **FavouriteProduct:** `user_id`, `product_id` (Composite PK).
+### 2.6 Cart and Order
+- `Cart` is one-per-user and can point to one store.
+- `CartItem` points to SKU and quantity.
+- Single-store rule is enforced in `CartService`.
+- `Order` snapshots delivery address as JSONB with `@JdbcTypeCode(SqlTypes.JSON)`.
+- `OrderItem` snapshots SKU price and quantity.
+- Historical order FKs are nullable where history must survive deletion.
 
-## 4. Detailed Implementation Phases
+### 2.7 Social and Notifications
+- Store reviews are one per user/store, with optional order link.
+- Store average rating is denormalized after review writes.
+- Favourites use composite keys for stores/products.
+- Order status changes publish events; notification delivery is asynchronous.
 
-### Phase 1: Infrastructure & Security
-1.  **Bootstrap:** Initialized Spring Boot 4, PostgreSQL, and PostGIS.
-2.  **Mock Security:** Implemented a custom JWT filter with a `mock-mode` to allow development without real Firebase credentials.
-3.  **Standardized Response:** Created `ApiResponse` envelope and `GlobalResponseWrapper` to ensure all endpoints return consistent JSON.
+## 3. API Surface
 
-### Phase 2: Core Vertical Slices
-1.  **User & Address:** Implemented profile syncing and spatial address management.
-2.  **Spatial Discovery:** Developed native PostGIS queries using `ST_DWithin` and `geography` casting for meter-based accuracy.
-3.  **Store-Specific Catalog:** Built the flexible `Store -> Category -> SKU` hierarchy to support industry-agnosticism.
+### 3.1 Public Store/Catalog APIs
+- `GET /api/v1/stores`
+  - Returns nearby store list array.
+- `GET /api/v1/stores/{id}`
+  - `id` must be UUID.
+- `GET /api/v1/stores/{storeId}/categories`
+  - Returns store category array.
+- `GET /api/v1/stores/{storeId}/products`
+  - Returns active product array only.
+  - Optional `subCategoryId`.
+  - Product objects include `priceSummary`.
+- `GET /api/v1/products/{productId}`
+  - Returns only public-valid active products.
 
-### Phase 3: Transactions & Social
-1.  **Smart Cart:** Implemented the "Single Store" constraint and SKU-based quantity management.
-2.  **Atomic Checkout:** Developed the conversion of Cart to Order with historical price and address snapshotting.
-3.  **Social Layer:** Implemented Reviews with automated average rating denormalization for stores.
-4.  **Event-Driven Notifications:** Integrated FCM with an asynchronous `@EventListener` pattern.
+### 3.2 Admin APIs
+- `POST /api/v1/admin/chains`
+- `POST /api/v1/admin/stores`
+- `POST /api/v1/admin/stores/{storeId}/categories`
+- `POST /api/v1/admin/categories/{categoryId}/sub-categories`
+- `POST /api/v1/admin/stores/{storeId}/products`
+  - Creates draft product.
+- `POST /api/v1/admin/products/{productId}/skus`
+  - Adds SKU to product after price validation.
+- `PATCH /api/v1/admin/products/{productId}/activate`
+  - Publishes valid product.
 
-### Phase 4: Performance & Tooling
-1.  **Optimization:** Migrated all IDs to UUID v7, enabled JPA Auditing, and resolved N+1 queries via `@EntityGraph`.
-2.  **Scalability:** Implemented Spring Cache for read-heavy discovery and catalog retrieval.
-3.  **Documentation:** Integrated Swagger UI (OpenAPI 3.1) and V2 Postman tooling.
+## 4. Database Migrations
+- `V1`: Users.
+- `V2`: Chains, stores, PostGIS store location index.
+- `V3`: Categories, sub-categories, products, SKUs.
+- `V4`: Carts and orders.
+- `V5`: Reviews and favourites.
+- `V6`: Store discovery enhancements.
+- `V7`: Engagement/tracking enhancements.
+- `V8`: Search performance optimization.
+- `V9`: Historical order FK nullability.
+- `V10`: Product status with existing products backfilled to `ACTIVE` and default set to `DRAFT`.
 
-## 5. Local Development Setup
-*   **Prerequisites:** Docker Desktop and Java 17+.
-*   **DB Boot:** Run `docker-compose up -d` (Includes Postgres, PostGIS, and Adminer on port 8081).
-*   **Mock Mode:** Enabled by default in `application.yml` (`nuvo.mock-mode=true`). Use any Bearer token in Postman.
-*   **Seeding:** The `DataSeeder` automatically populates 5 chains, 57 stores, and diverse catalogs on the first run.
-*   **Run:** Execute `./gradlew bootRun`.
+## 5. Local Development
+- Start database stack: `docker compose up -d`.
+- Backend default datasource:
+  - URL: `jdbc:postgresql://localhost:5432/nuvo_db`
+  - username: `postgres`
+  - password: `postgres`
+- Adminer:
+  - URL: `http://localhost:8081`
+  - system: PostgreSQL
+  - server: `postgres`
+  - user: `postgres`
+  - password: `postgres`
+  - database: `nuvo_db`
+- Mock mode default is `false`; run local backend with `--nuvo.mock-mode=true` when Firebase credentials are unavailable.
+- Preferred Gradle install:
+  `/Users/hyperion/.gradle/wrapper/dists/gradle-8.14.3-bin/cv11ve7ro1n3o1j4so8xd9n66/gradle-8.14.3/bin/gradle`
 
-## 6. Production & Deployment Readiness
-*   **CORS:** Parameterized via `nuvo.cors.allowed-origins` env var; must be restricted in prod.
-*   **Security:** Administrative Actuator endpoints are locked behind an `ADMIN` role.
-*   **Secrets:** All sensitive data (DB passwords, Firebase Keys) is externalized via environment variables.
-*   **Performance:** Hibernate `show-sql` and JSON "non-null" inclusions are optimized for minimal I/O and payload size.
+## 6. Test Strategy
+- Unit tests cover common response wrapping, controller delegation, admin/catalog/order/user/social service behavior.
+- Current `gradle test` passes.
+- Testcontainers/PostGIS integration tests remain pending for real spatial query verification and migration/database contract validation.
+
+## 7. Known Implementation Notes
+- Entity IDs use Hibernate time-ordered UUID generation via `@UuidGenerator(style = UuidGenerator.Style.TIME)`. This is chosen for write locality; if strict RFC UUIDv7 semantics are required, the generator should be reviewed/replaced explicitly.
+- Product keeps both `store_id` and `sub_category_id` for query efficiency. Service validation enforces consistency; a future DB trigger or schema redesign could enforce this invariant at database level.
+- Public catalog APIs intentionally prioritize domain correctness over frontend convenience.

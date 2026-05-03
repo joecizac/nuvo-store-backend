@@ -29,7 +29,10 @@ data class SubCategoryDTO(
     val name: String
 )
 
-@Schema(description = "SKU-derived product price summary")
+@Schema(
+    description = "SKU-derived product price summary. Values are integer minor units even though field names omit the cents suffix.",
+    example = """{"minPrice":11999,"maxPrice":12999,"displayPrice":11999,"hasPriceRange":true,"currency":"USD"}"""
+)
 data class ProductPriceSummaryDTO(
     @Schema(description = "Lowest available SKU price in minor units", example = "399")
     val minPrice: Long,
@@ -47,7 +50,7 @@ data class ProductPriceSummaryDTO(
     val currency: String = "USD"
 )
 
-@Schema(description = "Base product information")
+@Schema(description = "Customer-visible product. Public APIs only return ACTIVE products with at least one available SKU.")
 data class ProductDTO(
     @Schema(description = "Unique identifier", example = "018e6b12-1234-7c2a-8921-9d1e2f3a4b5c")
     val id: UUID,
@@ -67,7 +70,7 @@ data class ProductDTO(
     @Schema(description = "Detailed product description", example = "Fresh organic whole milk from local farms")
     val description: String?,
 
-    @Schema(description = "SKU-derived product price summary")
+    @Schema(description = "SKU-derived product price summary using available SKUs only")
     val priceSummary: ProductPriceSummaryDTO,
 
     @Schema(description = "URL to product image", example = "https://example.com/milk.jpg")
@@ -84,11 +87,11 @@ data class ProductDTO(
     @get:JsonProperty("isFavourite")
     val isFavourite: Boolean = false,
 
-    @Schema(description = "List of specific variants (SKUs) for this product")
+    @Schema(description = "Available public SKUs for this product")
     val skus: List<SkuDTO> = emptyList()
 )
 
-@Schema(description = "Product variant (Stock Keeping Unit)")
+@Schema(description = "Product variant (Stock Keeping Unit). This is the concrete sellable unit.")
 data class SkuDTO(
     @Schema(description = "Unique identifier", example = "018e6b12-1234-7c2a-8921-9d1e2f3a4b5c")
     val id: UUID,
@@ -96,16 +99,16 @@ data class SkuDTO(
     @Schema(description = "ID of the parent product", example = "018e6b12-1234-7c2a-8921-9d1e2f3a4b5c")
     val productId: UUID,
 
-    @Schema(description = "Variant name", example = "2 Liters")
+    @Schema(description = "Variant name", example = "Black/White - US 9")
     val name: String,
 
     @Schema(description = "URL to variant-specific image", example = "https://example.com/milk-2l.jpg")
     val imageUrl: String?,
 
-    @Schema(description = "Original listing price", example = "4.50")
+    @Schema(description = "Original listing price in major units", example = "129.99")
     val originalPrice: BigDecimal,
 
-    @Schema(description = "Discounted price (optional)", example = "3.99")
+    @Schema(description = "Discounted price in major units (optional)", example = "119.99")
     val discountedPrice: BigDecimal?,
 
     @Schema(description = "Availability flag for this specific variant", example = "true")
