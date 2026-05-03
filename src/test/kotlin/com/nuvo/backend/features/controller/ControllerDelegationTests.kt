@@ -113,7 +113,17 @@ class ControllerDelegationTests {
         val storeDto = storeDto()
         val chainDto = ChainDTO(UUID.randomUUID(), "Chain", null, null, null)
         val categoryDto = CategoryDTO(UUID.randomUUID(), "Category", null)
-        val productDto = ProductDTO(UUID.randomUUID(), storeDto.id, UUID.randomUUID(), "Product", null, null, true)
+        val productDto = ProductDTO(
+            UUID.randomUUID(),
+            storeDto.id,
+            UUID.randomUUID(),
+            categoryDto.id,
+            "Product",
+            null,
+            com.nuvo.backend.features.catalog.dto.ProductPriceSummaryDTO(1000, 1000, 1000, false),
+            null,
+            true
+        )
         `when`(storeService.searchStores(-33.9, 18.4, 1000.0, "q", pageable)).thenReturn(PageImpl(listOf(storeDto), pageable, 1))
         `when`(storeService.getNearbyStoresFiltered(-33.9, 18.4, 1000.0, null, null, false, pageable)).thenReturn(PageImpl(listOf(storeDto), pageable, 1))
         `when`(storeService.getStore(storeDto.id)).thenReturn(storeDto)
@@ -171,15 +181,18 @@ class ControllerDelegationTests {
         `when`(service.createStore(AdminStoreRequest(null, "Store", null, null, null, null, -33.9, 18.4, "Address"))).thenReturn(store)
         `when`(service.createCategory(store.id!!, AdminCategoryRequest("Category", null))).thenReturn(category)
         `when`(service.createSubCategory(category.id!!, AdminSubCategoryRequest("Sub"))).thenReturn(subCategory)
-        `when`(service.createProduct(store.id!!, AdminProductRequest(subCategory.id!!, "Product", null, null))).thenReturn(product)
+        val createProductRequest = AdminProductRequest(subCategory.id!!, "Product", null, null)
+        `when`(service.createProduct(store.id!!, createProductRequest)).thenReturn(product)
         `when`(service.createSku(product.id!!, AdminSkuRequest("SKU", null, BigDecimal.TEN, null))).thenReturn(sku)
+        `when`(service.activateProduct(product.id!!)).thenReturn(product)
 
         assertEquals(chain, controller.createChain(AdminChainRequest("Chain", null, null, null)))
         assertEquals(store, controller.createStore(AdminStoreRequest(null, "Store", null, null, null, null, -33.9, 18.4, "Address")))
         assertEquals(category, controller.createCategory(store.id!!, AdminCategoryRequest("Category", null)))
         assertEquals(subCategory, controller.createSubCategory(category.id!!, AdminSubCategoryRequest("Sub")))
-        assertEquals(product, controller.createProduct(store.id!!, AdminProductRequest(subCategory.id!!, "Product", null, null)))
+        assertEquals(product, controller.createProduct(store.id!!, createProductRequest))
         assertEquals(sku, controller.createSku(product.id!!, AdminSkuRequest("SKU", null, BigDecimal.TEN, null)))
+        assertEquals(product, controller.activateProduct(product.id!!))
     }
 
     private fun storeDto() = StoreDTO(

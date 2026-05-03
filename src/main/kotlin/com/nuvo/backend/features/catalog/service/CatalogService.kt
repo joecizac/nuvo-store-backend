@@ -3,10 +3,12 @@ package com.nuvo.backend.features.catalog.service
 import com.nuvo.backend.common.exception.ResourceNotFoundException
 import com.nuvo.backend.features.catalog.domain.Category
 import com.nuvo.backend.features.catalog.domain.Product
+import com.nuvo.backend.features.catalog.domain.ProductStatus
 import com.nuvo.backend.features.catalog.domain.SKU
 import com.nuvo.backend.features.catalog.domain.SubCategory
 import com.nuvo.backend.features.catalog.dto.CategoryDTO
 import com.nuvo.backend.features.catalog.dto.ProductDTO
+import com.nuvo.backend.features.catalog.dto.ProductPriceSummaryDTO
 import com.nuvo.backend.features.catalog.dto.SkuDTO
 import com.nuvo.backend.features.catalog.dto.SubCategoryDTO
 import com.nuvo.backend.features.catalog.repository.CategoryRepository
@@ -17,6 +19,8 @@ import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import java.math.BigDecimal
+import java.math.RoundingMode
 import java.util.*
 
 @Service
@@ -27,6 +31,26 @@ class CatalogService(
 ) {
     private fun UUID?.required(fieldName: String): UUID =
         this ?: throw IllegalStateException("Missing UUID for $fieldName")
+
+    private fun BigDecimal.toCents(): Long =
+        multiply(BigDecimal("100")).setScale(0, RoundingMode.HALF_UP).longValueExact()
+
+    private fun Product.availableSkus(): List<SKU> = skus.filter { it.isAvailable }
+
+    private fun Product.priceSummary(): ProductPriceSummaryDTO {
+        val prices = availableSkus().map { (it.discountedPrice ?: it.originalPrice).toCents() }
+        if (prices.isEmpty()) {
+            throw IllegalStateException("Product ${id.required("product.id")} has no available SKUs")
+        }
+        val minPrice = prices.min()
+        val maxPrice = prices.max()
+        return ProductPriceSummaryDTO(
+            minPrice = minPrice,
+            maxPrice = maxPrice,
+            displayPrice = minPrice,
+            hasPriceRange = minPrice != maxPrice
+        )
+    }
 
 
     @Transactional(readOnly = true)
@@ -49,9 +73,9 @@ class CatalogService(
         pageable: Pageable
     ): Page<ProductDTO> {
         val products = if (subCategoryId != null) {
-            productRepository.findAllByStoreIdAndSubCategoryId(storeId, subCategoryId, pageable)
+            productRepository.findPublicByStoreIdAndSubCategoryId(storeId, subCategoryId, ProductStatus.ACTIVE, pageable)
         } else {
-            productRepository.findAllByStoreId(storeId, pageable)
+            productRepository.findPublicByStoreId(storeId, ProductStatus.ACTIVE, pageable)
         }
         return products.map { it.toDTO() }
     }
@@ -59,7 +83,7 @@ class CatalogService(
     @Transactional(readOnly = true)
     @Cacheable(value = ["product_details"], key = "#productId")
     fun getProduct(productId: UUID): ProductDTO {
-        return productRepository.findById(productId)
+        return productRepository.findPublicById(productId, ProductStatus.ACTIVE)
             .orElseThrow { ResourceNotFoundException("Product not found") }
             .toDTO()
     }
@@ -76,11 +100,15 @@ class CatalogService(
         id = id.required("product.id"),
         storeId = store.id.required("product.store.id"),
         subCategoryId = subCategory.id.required("product.subCategory.id"),
+        categoryId = subCategory.category.id.required("product.subCategory.category.id"),
         name = name,
         description = description,
+        priceSummary = priceSummary(),
         imageUrl = imageUrl,
         isAvailable = isAvailable,
-        skus = skus.map { it.toDTO() }
+        rating = 0.0,
+        isFavourite = false,
+        skus = availableSkus().map { it.toDTO() }
     )
 
     private fun SKU.toDTO() = SkuDTO(
