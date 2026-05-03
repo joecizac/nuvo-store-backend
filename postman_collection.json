@@ -1,161 +1,1067 @@
 {
-	"info": {
-		"name": "Nuvo Delivery Platform V2",
-		"description": "Updated collection with Base Response Structure and Admin API.",
-		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
-	},
-	"item": [
-		{
-			"name": "User Management",
-			"item": [
-				{
-					"name": "Get My Profile",
-					"request": {
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{baseUrl}}/api/v1/users/me",
-							"host": ["{{baseUrl}}"],
-							"path": ["api", "v1", "users", "me"]
-						}
-					}
-				},
-				{
-					"name": "Get My Addresses",
-					"request": {
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{baseUrl}}/api/v1/users/me/addresses",
-							"host": ["{{baseUrl}}"],
-							"path": ["api", "v1", "users", "me", "addresses"]
-						}
-					}
-				}
-			]
-		},
-		{
-			"name": "Store Discovery",
-			"item": [
-				{
-					"name": "Discover Nearby",
-					"request": {
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{baseUrl}}/api/v1/stores?lat=-33.9&lng=18.4&radius=50000",
-							"host": ["{{baseUrl}}"],
-							"path": ["api", "v1", "stores"],
-							"query": [
-								{ "key": "lat", "value": "-33.9" },
-								{ "key": "lng", "value": "18.4" },
-								{ "key": "radius", "value": "50000" }
-							]
-						}
-					}
-				},
-				{
-					"name": "Get Store Categories",
-					"request": {
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{baseUrl}}/api/v1/stores/{{sampleStoreId}}/categories",
-							"host": ["{{baseUrl}}"],
-							"path": ["api", "v1", "stores", "{{sampleStoreId}}", "categories"]
-						}
-					}
-				},
-				{
-					"name": "List Store Products",
-					"request": {
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{baseUrl}}/api/v1/stores/{{sampleStoreId}}/products",
-							"host": ["{{baseUrl}}"],
-							"path": ["api", "v1", "stores", "{{sampleStoreId}}", "products"]
-						}
-					}
-				}
-			]
-		},
-		{
-			"name": "Cart & Checkout",
-			"item": [
-				{
-					"name": "View Cart",
-					"request": {
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{baseUrl}}/api/v1/cart",
-							"host": ["{{baseUrl}}"],
-							"path": ["api", "v1", "cart"]
-						}
-					}
-				},
-				{
-					"name": "Add SKU to Cart",
-					"request": {
-						"method": "POST",
-						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n  \"skuId\": \"{{sampleSkuId}}\",\n  \"quantity\": 1\n}",
-							"options": { "json": { "language": "json" } }
-						},
-						"url": {
-							"raw": "{{baseUrl}}/api/v1/cart/items",
-							"host": ["{{baseUrl}}"],
-							"path": ["api", "v1", "cart", "items"]
-						}
-					}
-				},
-				{
-					"name": "Checkout",
-					"request": {
-						"method": "POST",
-						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n  \"addressId\": \"{{sampleAddressId}}\"\n}",
-							"options": { "json": { "language": "json" } }
-						},
-						"url": {
-							"raw": "{{baseUrl}}/api/v1/orders",
-							"host": ["{{baseUrl}}"],
-							"path": ["api", "v1", "orders"]
-						}
-					}
-				}
-			]
-		},
-		{
-			"name": "Admin Management",
-			"item": [
-				{
-					"name": "Create Chain",
-					"request": {
-						"method": "POST",
-						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n  \"name\": \"New Coffee Chain\",\n  \"description\": \"Premium Arabica coffee\"\n}",
-							"options": { "json": { "language": "json" } }
-						},
-						"url": {
-							"raw": "{{baseUrl}}/api/v1/admin/chains",
-							"host": ["{{baseUrl}}"],
-							"path": ["api", "v1", "admin", "chains"]
-						}
-					}
-				}
-			]
-		}
-	],
-	"auth": {
-		"type": "bearer",
-		"bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }]
-	}
+  "info": {
+    "name": "Nuvo Delivery Platform",
+    "description": "Postman collection for the current Nuvo backend. Responses are wrapped as { success, data, message, errorCode }. Public product APIs return ACTIVE products with available SKUs and SKU-derived priceSummary.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "event": [
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "pm.test('response uses Nuvo envelope when body is JSON', function () {",
+          "  const contentType = pm.response.headers.get('Content-Type') || '';",
+          "  if (contentType.includes('application/json') && pm.response.text()) {",
+          "    const body = pm.response.json();",
+          "    pm.expect(body).to.have.property('success');",
+          "    pm.expect(body).to.have.property('message');",
+          "  }",
+          "});"
+        ]
+      }
+    }
+  ],
+  "item": [
+    {
+      "name": "Health & API Docs",
+      "item": [
+        {
+          "name": "Swagger UI",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/swagger-ui/index.html",
+              "host": ["{{baseUrl}}"],
+              "path": ["swagger-ui", "index.html"]
+            }
+          }
+        },
+        {
+          "name": "OpenAPI JSON",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/v3/api-docs",
+              "host": ["{{baseUrl}}"],
+              "path": ["v3", "api-docs"]
+            }
+          }
+        },
+        {
+          "name": "Actuator Health",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/actuator/health",
+              "host": ["{{baseUrl}}"],
+              "path": ["actuator", "health"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "User Management",
+      "item": [
+        {
+          "name": "Get My Profile",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/users/me",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "users", "me"]
+            }
+          }
+        },
+        {
+          "name": "Sync My Profile",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Nuvo Tester\",\n  \"email\": \"tester@nuvo.com\",\n  \"profileImageUrl\": \"https://cdn.example.com/users/tester.png\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/users/me",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "users", "me"]
+            }
+          }
+        },
+        {
+          "name": "Update FCM Token",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "text/plain"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "mock-fcm-token"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/users/me/fcm-token",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "users", "me", "fcm-token"]
+            }
+          }
+        },
+        {
+          "name": "List My Addresses",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "if (body.success && Array.isArray(body.data) && body.data.length > 0) {",
+                  "  pm.environment.set('sampleAddressId', body.data[0].id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/users/me/addresses",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "users", "me", "addresses"]
+            }
+          }
+        },
+        {
+          "name": "Add Address",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "if (body.success && body.data && body.data.id) {",
+                  "  pm.environment.set('createdAddressId', body.data.id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Office\",\n  \"fullAddress\": \"456 Test Avenue, Cape Town\",\n  \"latitude\": -33.92,\n  \"longitude\": 18.42,\n  \"isDefault\": false\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/users/me/addresses",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "users", "me", "addresses"]
+            }
+          }
+        },
+        {
+          "name": "Set Default Address",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/users/me/addresses/{{createdAddressId}}/default",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "users", "me", "addresses", "{{createdAddressId}}", "default"]
+            }
+          }
+        },
+        {
+          "name": "Delete Address",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/users/me/addresses/{{createdAddressId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "users", "me", "addresses", "{{createdAddressId}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Store Discovery & Catalog",
+      "item": [
+        {
+          "name": "Discover Nearby Stores",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "if (body.success && Array.isArray(body.data) && body.data.length > 0) {",
+                  "  pm.environment.set('sampleStoreId', body.data[0].id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/stores?lat={{latitude}}&lng={{longitude}}&radius={{radius}}&page=0&size=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "stores"],
+              "query": [
+                {
+                  "key": "lat",
+                  "value": "{{latitude}}"
+                },
+                {
+                  "key": "lng",
+                  "value": "{{longitude}}"
+                },
+                {
+                  "key": "radius",
+                  "value": "{{radius}}"
+                },
+                {
+                  "key": "page",
+                  "value": "0"
+                },
+                {
+                  "key": "size",
+                  "value": "10"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Search Stores",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/stores/search?lat={{latitude}}&lng={{longitude}}&radius={{radius}}&q=Burger&page=0&size=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "stores", "search"],
+              "query": [
+                {
+                  "key": "lat",
+                  "value": "{{latitude}}"
+                },
+                {
+                  "key": "lng",
+                  "value": "{{longitude}}"
+                },
+                {
+                  "key": "radius",
+                  "value": "{{radius}}"
+                },
+                {
+                  "key": "q",
+                  "value": "Burger"
+                },
+                {
+                  "key": "page",
+                  "value": "0"
+                },
+                {
+                  "key": "size",
+                  "value": "10"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Store Details",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/stores/{{sampleStoreId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "stores", "{{sampleStoreId}}"]
+            }
+          }
+        },
+        {
+          "name": "List Chains",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/chains",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "chains"]
+            }
+          }
+        },
+        {
+          "name": "Get Store Categories",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "if (body.success && Array.isArray(body.data) && body.data.length > 0) {",
+                  "  pm.environment.set('sampleCategoryId', body.data[0].id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/stores/{{sampleStoreId}}/categories",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "stores", "{{sampleStoreId}}", "categories"]
+            }
+          }
+        },
+        {
+          "name": "Get Sub-Categories",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "if (body.success && Array.isArray(body.data) && body.data.length > 0) {",
+                  "  pm.environment.set('sampleSubCategoryId', body.data[0].id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/categories/{{sampleCategoryId}}/sub-categories",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "categories", "{{sampleCategoryId}}", "sub-categories"]
+            }
+          }
+        },
+        {
+          "name": "List Store Products",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "if (body.success && Array.isArray(body.data) && body.data.length > 0) {",
+                  "  pm.environment.set('sampleProductId', body.data[0].id);",
+                  "  if (body.data[0].skus && body.data[0].skus.length > 0) {",
+                  "    pm.environment.set('sampleSkuId', body.data[0].skus[0].id);",
+                  "  }",
+                  "  pm.test('product exposes priceSummary, not priceCents', function () {",
+                  "    pm.expect(body.data[0]).to.have.property('priceSummary');",
+                  "    pm.expect(body.data[0]).to.not.have.property('priceCents');",
+                  "  });",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/stores/{{sampleStoreId}}/products?page=0&size=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "stores", "{{sampleStoreId}}", "products"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "0"
+                },
+                {
+                  "key": "size",
+                  "value": "10"
+                }
+              ]
+            },
+            "description": "Returns only ACTIVE public products with available SKUs. Product pricing is under priceSummary."
+          }
+        },
+        {
+          "name": "List Store Products by Sub-Category",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/stores/{{sampleStoreId}}/products?subCategoryId={{sampleSubCategoryId}}&page=0&size=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "stores", "{{sampleStoreId}}", "products"],
+              "query": [
+                {
+                  "key": "subCategoryId",
+                  "value": "{{sampleSubCategoryId}}"
+                },
+                {
+                  "key": "page",
+                  "value": "0"
+                },
+                {
+                  "key": "size",
+                  "value": "10"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Product Details",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/products/{{sampleProductId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "products", "{{sampleProductId}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Cart & Checkout",
+      "item": [
+        {
+          "name": "View Cart",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/cart",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "cart"]
+            }
+          }
+        },
+        {
+          "name": "Add SKU to Cart",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "if (body.success && body.data && body.data.items && body.data.items.length > 0) {",
+                  "  pm.environment.set('sampleCartItemId', body.data.items[0].id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"skuId\": \"{{sampleSkuId}}\",\n  \"quantity\": 1\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/cart/items",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "cart", "items"]
+            }
+          }
+        },
+        {
+          "name": "Update Cart Item Quantity",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/cart/items/{{sampleCartItemId}}?quantity=2",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "cart", "items", "{{sampleCartItemId}}"],
+              "query": [
+                {
+                  "key": "quantity",
+                  "value": "2"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Checkout",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "if (body.success && body.data && body.data.id) {",
+                  "  pm.environment.set('sampleOrderId', body.data.id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"addressId\": \"{{sampleAddressId}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/orders",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "orders"]
+            }
+          }
+        },
+        {
+          "name": "Order History",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/orders?page=0&size=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "orders"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "0"
+                },
+                {
+                  "key": "size",
+                  "value": "10"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Order Details",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/orders/{{sampleOrderId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "orders", "{{sampleOrderId}}"]
+            }
+          }
+        },
+        {
+          "name": "Clear Cart",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/cart",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "cart"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Social",
+      "item": [
+        {
+          "name": "Get Store Reviews",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/stores/{{sampleStoreId}}/reviews?page=0&size=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "stores", "{{sampleStoreId}}", "reviews"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "0"
+                },
+                {
+                  "key": "size",
+                  "value": "10"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Submit Store Review",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"rating\": 5,\n  \"comment\": \"Great service and fast delivery.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/stores/{{sampleStoreId}}/reviews",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "stores", "{{sampleStoreId}}", "reviews"]
+            }
+          }
+        },
+        {
+          "name": "Toggle Favourite Store",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/stores/{{sampleStoreId}}/favourite",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "stores", "{{sampleStoreId}}", "favourite"]
+            }
+          }
+        },
+        {
+          "name": "Toggle Favourite Product",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/products/{{sampleProductId}}/favourite",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "products", "{{sampleProductId}}", "favourite"]
+            }
+          }
+        },
+        {
+          "name": "Order Tracking",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/orders/{{sampleOrderId}}/tracking",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "orders", "{{sampleOrderId}}", "tracking"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Admin Management",
+      "auth": {
+        "type": "bearer",
+        "bearer": [
+          {
+            "key": "token",
+            "value": "{{adminToken}}",
+            "type": "string"
+          }
+        ]
+      },
+      "item": [
+        {
+          "name": "Create Chain",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "if (body.success && body.data && body.data.id) {",
+                  "  pm.environment.set('createdChainId', body.data.id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Nike\",\n  \"description\": \"Global sportswear and footwear brand\",\n  \"logoUrl\": \"https://cdn.example.com/chains/nike-logo.png\",\n  \"bannerUrl\": \"https://cdn.example.com/chains/nike-banner.jpg\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/chains",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "admin", "chains"]
+            }
+          }
+        },
+        {
+          "name": "Create Chain Store",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "if (body.success && body.data && body.data.id) {",
+                  "  pm.environment.set('createdStoreId', body.data.id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"chainId\": \"{{createdChainId}}\",\n  \"name\": \"Nike Store - Cape Town V&A Waterfront\",\n  \"description\": \"Official Nike retail store\",\n  \"contactNumber\": \"+27210000000\",\n  \"logoUrl\": \"https://cdn.example.com/stores/nike-cpt-logo.png\",\n  \"bannerUrl\": \"https://cdn.example.com/stores/nike-cpt-banner.jpg\",\n  \"latitude\": -33.9034,\n  \"longitude\": 18.4208,\n  \"address\": \"V&A Waterfront, Cape Town\",\n  \"isActive\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/stores",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "admin", "stores"]
+            }
+          }
+        },
+        {
+          "name": "Create Independent Store",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"chainId\": null,\n  \"name\": \"Corner Groceries\",\n  \"description\": \"Independent neighbourhood grocery store\",\n  \"contactNumber\": \"+27219999999\",\n  \"logoUrl\": null,\n  \"bannerUrl\": null,\n  \"latitude\": -33.9249,\n  \"longitude\": 18.4241,\n  \"address\": \"123 Main Street, Cape Town\",\n  \"isActive\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/stores",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "admin", "stores"]
+            }
+          }
+        },
+        {
+          "name": "Create Store Category",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "if (body.success && body.data && body.data.id) {",
+                  "  pm.environment.set('createdCategoryId', body.data.id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Shoes\",\n  \"imageUrl\": \"https://cdn.example.com/categories/shoes.jpg\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/stores/{{createdStoreId}}/categories",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "admin", "stores", "{{createdStoreId}}", "categories"]
+            }
+          }
+        },
+        {
+          "name": "Create Sub-Category",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "if (body.success && body.data && body.data.id) {",
+                  "  pm.environment.set('createdSubCategoryId', body.data.id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Running Shoes\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/categories/{{createdCategoryId}}/sub-categories",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "admin", "categories", "{{createdCategoryId}}", "sub-categories"]
+            }
+          }
+        },
+        {
+          "name": "Create Draft Product",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "if (body.success && body.data && body.data.id) {",
+                  "  pm.environment.set('createdProductId', body.data.id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"subCategoryId\": \"{{createdSubCategoryId}}\",\n  \"name\": \"Nike Air Max 270\",\n  \"description\": \"Lightweight lifestyle shoes with Max Air cushioning\",\n  \"imageUrl\": \"https://cdn.example.com/products/air-max-270.jpg\",\n  \"isAvailable\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/stores/{{createdStoreId}}/products",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "admin", "stores", "{{createdStoreId}}", "products"]
+            },
+            "description": "Creates a DRAFT product. It will not appear in public product APIs until a SKU is added and the product is activated."
+          }
+        },
+        {
+          "name": "Create Product SKU",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "if (body.success && body.data && body.data.id) {",
+                  "  pm.environment.set('createdSkuId', body.data.id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Black/White - US 9\",\n  \"imageUrl\": \"https://cdn.example.com/skus/air-max-270-black-us9.jpg\",\n  \"originalPrice\": 129.99,\n  \"discountedPrice\": 119.99,\n  \"isAvailable\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/products/{{createdProductId}}/skus",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "admin", "products", "{{createdProductId}}", "skus"]
+            }
+          }
+        },
+        {
+          "name": "Create Second Product SKU",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Black/White - US 10\",\n  \"imageUrl\": \"https://cdn.example.com/skus/air-max-270-black-us10.jpg\",\n  \"originalPrice\": 129.99,\n  \"discountedPrice\": null,\n  \"isAvailable\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/products/{{createdProductId}}/skus",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "admin", "products", "{{createdProductId}}", "skus"]
+            }
+          }
+        },
+        {
+          "name": "Activate Product",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "pm.test('product activated', function () {",
+                  "  pm.expect(body.success).to.eql(true);",
+                  "  pm.expect(body.data.status).to.eql('ACTIVE');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/products/{{createdProductId}}/activate",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "admin", "products", "{{createdProductId}}", "activate"]
+            },
+            "description": "Publishes a valid product. Requires hierarchy consistency, at least one SKU, at least one available SKU, and valid SKU prices."
+          }
+        }
+      ]
+    }
+  ]
 }
