@@ -1,6 +1,7 @@
 package com.nuvo.backend.features.admin.service
 
 import com.nuvo.backend.common.exception.ResourceNotFoundException
+import com.nuvo.backend.common.exception.ValidationException
 import com.nuvo.backend.common.util.GeometryUtil
 import com.nuvo.backend.features.admin.dto.*
 import com.nuvo.backend.features.catalog.domain.*
@@ -11,6 +12,7 @@ import org.springframework.cache.annotation.CacheEvict
 import org.springframework.cache.annotation.Caching
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import java.math.BigDecimal
 import java.util.*
 
 @Service
@@ -22,6 +24,21 @@ class AdminService(
     private val productRepository: ProductRepository,
     private val skuRepository: SKURepository
 ) {
+    private fun Product.validateStoreHierarchy() {
+        if (subCategory.category.store.id != store.id) {
+            throw ValidationException("Product sub-category does not belong to the product store")
+        }
+    }
+
+    private fun SKU.validatePrice() {
+        if (originalPrice <= BigDecimal.ZERO) {
+            throw ValidationException("SKU original price must be greater than zero")
+        }
+        if (discountedPrice != null && (discountedPrice!! <= BigDecimal.ZERO || discountedPrice!! > originalPrice)) {
+            throw ValidationException("SKU discounted price must be greater than zero and less than or equal to original price")
+        }
+    }
+
 
     @Transactional
     @CacheEvict(value = ["global_chains"], allEntries = true)
@@ -87,7 +104,11 @@ class AdminService(
     fun createProduct(storeId: UUID, request: AdminProductRequest): Product {
         val store = storeRepository.findById(storeId).orElseThrow { ResourceNotFoundException("Store not found") }
         val subCategory = subCategoryRepository.findById(request.subCategoryId).orElseThrow { ResourceNotFoundException("SubCategory not found") }
-        
+
+        if (subCategory.category.store.id != storeId) {
+            throw ValidationException("SubCategory does not belong to the target store")
+        }
+
         return productRepository.save(
             Product(
                 store = store,
@@ -95,7 +116,8 @@ class AdminService(
                 name = request.name,
                 description = request.description,
                 imageUrl = request.imageUrl,
-                isAvailable = request.isAvailable
+                isAvailable = request.isAvailable,
+                status = ProductStatus.DRAFT
             )
         )
     }
@@ -109,15 +131,39 @@ class AdminService(
     )
     fun createSku(productId: UUID, request: AdminSkuRequest): SKU {
         val product = productRepository.findById(productId).orElseThrow { ResourceNotFoundException("Product not found") }
-        return skuRepository.save(
-            SKU(
-                product = product,
-                name = request.name,
-                imageUrl = request.imageUrl,
-                originalPrice = request.originalPrice,
-                discountedPrice = request.discountedPrice,
-                isAvailable = request.isAvailable
-            )
+        val sku = SKU(
+            product = product,
+            name = request.name,
+            imageUrl = request.imageUrl,
+            originalPrice = request.originalPrice,
+            discountedPrice = request.discountedPrice,
+            isAvailable = request.isAvailable
         )
+        sku.validatePrice()
+        return skuRepository.save(
+            sku
+        )
+    }
+
+    @Transactional
+    @Caching(
+        evict = [
+            CacheEvict(value = ["product_details"], key = "#productId"),
+            CacheEvict(value = ["store_products"], allEntries = true)
+        ]
+    )
+    fun activateProduct(productId: UUID): Product {
+        val product = productRepository.findById(productId).orElseThrow { ResourceNotFoundException("Product not found") }
+        product.validateStoreHierarchy()
+        if (product.skus.isEmpty()) {
+            throw ValidationException("Product must have at least one SKU before activation")
+        }
+        product.skus.forEach { it.validatePrice() }
+        if (product.skus.none { it.isAvailable }) {
+            throw ValidationException("Product must have at least one available SKU before activation")
+        }
+        product.status = ProductStatus.ACTIVE
+        product.isAvailable = true
+        return productRepository.save(product)
     }
 }

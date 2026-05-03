@@ -9,6 +9,10 @@ import jakarta.persistence.*
 import java.time.LocalDateTime
 import java.util.*
 
+enum class ProductStatus {
+    DRAFT, ACTIVE, ARCHIVED
+}
+
 @Entity
 @Table(name = "products")
 @EntityListeners(AuditingEntityListener::class)
@@ -37,6 +41,10 @@ class Product(
 
     @Column(name = "is_available")
     var isAvailable: Boolean = true,
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    var status: ProductStatus = ProductStatus.DRAFT,
 
     @CreatedDate
     @Column(name = "created_at", updatable = false)

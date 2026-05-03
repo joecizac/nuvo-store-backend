@@ -42,4 +42,9 @@ class AdminController(
     @Operation(summary = "Create product SKU", description = "Adds a new variant (SKU) to an existing product")
     fun createSku(@PathVariable productId: UUID, @Valid @RequestBody request: AdminSkuRequest) = 
         adminService.createSku(productId, request)
+
+    @PatchMapping("/products/{productId}/activate")
+    @Operation(summary = "Activate product", description = "Publishes a valid product to the customer-facing catalog")
+    fun activateProduct(@PathVariable productId: UUID) =
+        adminService.activateProduct(productId)
 }

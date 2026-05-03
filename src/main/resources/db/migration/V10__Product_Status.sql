@@ -1,0 +1,6 @@
+ALTER TABLE products ADD COLUMN status VARCHAR(20);
+
+UPDATE products SET status = 'ACTIVE';
+
+ALTER TABLE products ALTER COLUMN status SET NOT NULL;
+ALTER TABLE products ALTER COLUMN status SET DEFAULT 'DRAFT';

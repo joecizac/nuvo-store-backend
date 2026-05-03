@@ -3,12 +3,14 @@ package com.nuvo.backend.features.admin.service
 import com.nuvo.backend.TestFixtures
 import com.nuvo.backend.TestFixtures.any
 import com.nuvo.backend.common.exception.ResourceNotFoundException
+import com.nuvo.backend.common.exception.ValidationException
 import com.nuvo.backend.features.admin.dto.AdminCategoryRequest
 import com.nuvo.backend.features.admin.dto.AdminChainRequest
 import com.nuvo.backend.features.admin.dto.AdminProductRequest
 import com.nuvo.backend.features.admin.dto.AdminSkuRequest
 import com.nuvo.backend.features.admin.dto.AdminStoreRequest
 import com.nuvo.backend.features.admin.dto.AdminSubCategoryRequest
+import com.nuvo.backend.features.catalog.domain.ProductStatus
 import com.nuvo.backend.features.catalog.repository.CategoryRepository
 import com.nuvo.backend.features.catalog.repository.ProductRepository
 import com.nuvo.backend.features.catalog.repository.SKURepository
@@ -101,12 +103,94 @@ class AdminServiceTests {
 
         val savedCategory = service.createCategory(store.id!!, AdminCategoryRequest("Food", "food.png"))
         val savedSubCategory = service.createSubCategory(category.id!!, AdminSubCategoryRequest("Pizza"))
-        val savedProduct = service.createProduct(store.id!!, AdminProductRequest(subCategory.id!!, "Margherita", "Classic", "pizza.png"))
+        val savedProduct = service.createProduct(
+            store.id!!,
+            AdminProductRequest(
+                subCategory.id!!,
+                "Margherita",
+                "Classic",
+                "pizza.png"
+            )
+        )
         val savedSku = service.createSku(product.id!!, AdminSkuRequest("Large", "large.png", BigDecimal("20.00"), BigDecimal("18.00")))
 
         assertEquals(store, savedCategory.store)
         assertEquals(category, savedSubCategory.category)
         assertEquals(subCategory, savedProduct.subCategory)
+        assertEquals(ProductStatus.DRAFT, savedProduct.status)
+        assertEquals(0, savedProduct.skus.size)
         assertEquals(product, savedSku.product)
+    }
+
+    @Test
+    fun `createProduct rejects subcategories from another store`() {
+        val store = TestFixtures.store()
+        val otherStore = TestFixtures.store()
+        val subCategory = TestFixtures.subCategory(category = TestFixtures.category(store = otherStore))
+
+        `when`(storeRepository.findById(store.id!!)).thenReturn(Optional.of(store))
+        `when`(subCategoryRepository.findById(subCategory.id!!)).thenReturn(Optional.of(subCategory))
+
+        assertThrows<ValidationException> {
+            service.createProduct(
+                store.id!!,
+                AdminProductRequest(
+                    subCategory.id!!,
+                    "Invalid Product",
+                    null,
+                    null
+                )
+            )
+        }
+    }
+
+    @Test
+    fun `activateProduct fails without SKUs`() {
+        val store = TestFixtures.store()
+        val product = TestFixtures.product(store = store, subCategory = TestFixtures.subCategory(category = TestFixtures.category(store = store)))
+        `when`(productRepository.findById(product.id!!)).thenReturn(Optional.of(product))
+
+        assertThrows<ValidationException> {
+            service.activateProduct(product.id!!)
+        }
+    }
+
+    @Test
+    fun `activateProduct fails when all SKUs are unavailable`() {
+        val store = TestFixtures.store()
+        val product = TestFixtures.product(store = store, subCategory = TestFixtures.subCategory(category = TestFixtures.category(store = store)))
+        product.skus.add(TestFixtures.sku(product = product, originalPrice = "10.00").apply { isAvailable = false })
+        `when`(productRepository.findById(product.id!!)).thenReturn(Optional.of(product))
+
+        assertThrows<ValidationException> {
+            service.activateProduct(product.id!!)
+        }
+    }
+
+    @Test
+    fun `activateProduct fails when product hierarchy store is inconsistent`() {
+        val store = TestFixtures.store()
+        val otherStore = TestFixtures.store()
+        val product = TestFixtures.product(store = store, subCategory = TestFixtures.subCategory(category = TestFixtures.category(store = otherStore)))
+        product.skus.add(TestFixtures.sku(product = product, originalPrice = "10.00"))
+        `when`(productRepository.findById(product.id!!)).thenReturn(Optional.of(product))
+
+        assertThrows<ValidationException> {
+            service.activateProduct(product.id!!)
+        }
+    }
+
+    @Test
+    fun `activateProduct succeeds with a valid available SKU`() {
+        val store = TestFixtures.store()
+        val product = TestFixtures.product(store = store, subCategory = TestFixtures.subCategory(category = TestFixtures.category(store = store)))
+        product.skus.add(TestFixtures.sku(product = product, originalPrice = "10.00"))
+        `when`(productRepository.findById(product.id!!)).thenReturn(Optional.of(product))
+        `when`(productRepository.save(any())).thenAnswer { it.arguments[0] }
+
+        val activated = service.activateProduct(product.id!!)
+
+        assertEquals(ProductStatus.ACTIVE, activated.status)
+        assertEquals(true, activated.isAvailable)
     }
 }
