@@ -3,6 +3,8 @@ package com.nuvo.backend.common.exception
 import com.nuvo.backend.common.dto.ApiResponse
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException
+import org.springframework.http.converter.HttpMessageNotReadableException
 import org.springframework.web.bind.MethodArgumentNotValidException
 import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.bind.annotation.RestControllerAdvice
@@ -20,18 +22,35 @@ class GlobalExceptionHandler {
         }
         val apiResponse = ApiResponse.error<Any>(
             message = ex.message,
-            code = ex.code
+            errorCode = ex.code.toString()
         )
         return ResponseEntity(apiResponse, status)
     }
 
     @ExceptionHandler(MethodArgumentNotValidException::class)
     fun handleValidationErrors(ex: MethodArgumentNotValidException, request: WebRequest): ResponseEntity<ApiResponse<Any>> {
-        val errors = ex.bindingResult.fieldErrors.joinToString(", ") { "\${it.field}: \${it.defaultMessage}" }
+        val errors = ex.bindingResult.fieldErrors.joinToString(", ") { "${it.field}: ${it.defaultMessage}" }
         val apiResponse = ApiResponse.error<Any>(
             message = "Validation Failed",
-            error = errors,
-            code = 4000
+            errorCode = "4000"
+        )
+        return ResponseEntity(apiResponse, HttpStatus.BAD_REQUEST)
+    }
+
+    @ExceptionHandler(MethodArgumentTypeMismatchException::class)
+    fun handleTypeMismatch(ex: MethodArgumentTypeMismatchException): ResponseEntity<ApiResponse<Any>> {
+        val apiResponse = ApiResponse.error<Any>(
+            message = "Invalid value for parameter '${ex.name}'",
+            errorCode = "4001"
+        )
+        return ResponseEntity(apiResponse, HttpStatus.BAD_REQUEST)
+    }
+
+    @ExceptionHandler(HttpMessageNotReadableException::class)
+    fun handleUnreadableMessage(): ResponseEntity<ApiResponse<Any>> {
+        val apiResponse = ApiResponse.error<Any>(
+            message = "Malformed request body",
+            errorCode = "4002"
         )
         return ResponseEntity(apiResponse, HttpStatus.BAD_REQUEST)
     }
@@ -40,8 +59,7 @@ class GlobalExceptionHandler {
     fun handleAllExceptions(ex: Exception, request: WebRequest): ResponseEntity<ApiResponse<Any>> {
         val apiResponse = ApiResponse.error<Any>(
             message = "Internal Server Error",
-            error = ex.message ?: "An unexpected error occurred",
-            code = 5000
+            errorCode = "5000"
         )
         return ResponseEntity(apiResponse, HttpStatus.INTERNAL_SERVER_ERROR)
     }

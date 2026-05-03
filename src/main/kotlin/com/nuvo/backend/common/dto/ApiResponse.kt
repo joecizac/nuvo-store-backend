@@ -4,16 +4,16 @@ import com.fasterxml.jackson.annotation.JsonInclude
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 data class ApiResponse<T>(
-    val code: Int,
-    val message: String,
+    val success: Boolean,
     val data: T? = null,
-    val error: String? = null
+    val message: String? = null,
+    val errorCode: String? = null
 ) {
     companion object {
-        fun <T> success(data: T?, message: String = "Success", code: Int = 2000): ApiResponse<T> =
-            ApiResponse(code = code, message = message, data = data)
+        fun <T> success(data: T?, message: String = "Success"): ApiResponse<T> =
+            ApiResponse(success = true, data = data, message = message)
 
-        fun <T> error(message: String, error: String? = null, code: Int = 5000): ApiResponse<T> =
-            ApiResponse(code = code, message = message, error = error)
+        fun <T> error(message: String, errorCode: String? = null): ApiResponse<T> =
+            ApiResponse(success = false, message = message, errorCode = errorCode)
     }
 }

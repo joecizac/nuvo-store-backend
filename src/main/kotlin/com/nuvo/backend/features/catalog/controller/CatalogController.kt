@@ -6,7 +6,6 @@ import com.nuvo.backend.features.catalog.dto.SubCategoryDTO
 import com.nuvo.backend.features.catalog.service.CatalogService
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.tags.Tag
-import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
 import org.springframework.web.bind.annotation.*
 import java.util.*
@@ -36,8 +35,8 @@ class CatalogController(
         @PathVariable storeId: UUID,
         @RequestParam(required = false) subCategoryId: UUID?,
         pageable: Pageable
-    ): Page<ProductDTO> {
-        return catalogService.getStoreProducts(storeId, subCategoryId, pageable)
+    ): List<ProductDTO> {
+        return catalogService.getStoreProducts(storeId, subCategoryId, pageable).content
     }
 
     @GetMapping("/products/{productId}")

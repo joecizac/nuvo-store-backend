@@ -123,13 +123,13 @@ class ControllerDelegationTests {
         `when`(catalogService.getStoreProducts(storeDto.id, null, pageable)).thenReturn(PageImpl(listOf(productDto), pageable, 1))
         `when`(catalogService.getProduct(productDto.id)).thenReturn(productDto)
 
-        assertEquals(1, storeController.search(-33.9, 18.4, 1000.0, "q", pageable).totalElements)
-        assertEquals(1, storeController.getStores(-33.9, 18.4, 1000.0, null, null, false, pageable).totalElements)
+        assertEquals(1, storeController.search(-33.9, 18.4, 1000.0, "q", pageable).size)
+        assertEquals(1, storeController.getStores(-33.9, 18.4, 1000.0, null, null, false, pageable).size)
         assertEquals(storeDto, storeController.getStore(storeDto.id))
         assertEquals(listOf(chainDto), storeController.getChains())
         assertEquals(listOf(storeDto), storeController.getStoresByChain(chainDto.id))
         assertEquals(listOf(categoryDto), catalogController.getStoreCategories(storeDto.id))
-        assertEquals(1, catalogController.getStoreProducts(storeDto.id, null, pageable).totalElements)
+        assertEquals(1, catalogController.getStoreProducts(storeDto.id, null, pageable).size)
         assertEquals(productDto, catalogController.getProduct(productDto.id))
     }
 

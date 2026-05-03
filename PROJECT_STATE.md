@@ -7,7 +7,7 @@ The system is a production-grade, industry-agnostic delivery backend built with 
 *   **Database:** PostgreSQL 15+ with **PostGIS** for high-performance spatial discovery.
 *   **Security:** Stateless **Firebase JWT** authentication with a "Mock Mode" for local development.
 *   **Persistence:** Hibernate 7 with **UUID v7** (Time-Sorted) primary keys.
-*   **Communication:** RESTful API with a **Global Response Wrapper** (`code`, `message`, `data`) and unified error handling.
+*   **Communication:** RESTful API with a **Global Response Wrapper** (`success`, `data`, `message`, `errorCode`) and unified error handling.
 *   **Performance:** Spring Cache (In-memory) for read-heavy catalogs and **N+1 query resolution** via `@EntityGraph`.
 
 ## 2. Key Decisions & Rationale

@@ -5,7 +5,6 @@ import com.nuvo.backend.features.store.dto.StoreDTO
 import com.nuvo.backend.features.store.service.StoreService
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.tags.Tag
-import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
 import org.springframework.web.bind.annotation.*
 import java.util.*
@@ -25,8 +24,8 @@ class StoreController(
         @RequestParam(defaultValue = "10000") radius: Double,
         @RequestParam q: String,
         pageable: Pageable
-    ): Page<StoreDTO> {
-        return storeService.searchStores(lat, lng, radius, q, pageable)
+    ): List<StoreDTO> {
+        return storeService.searchStores(lat, lng, radius, q, pageable).content
     }
 
     @GetMapping("/stores")
@@ -39,8 +38,8 @@ class StoreController(
         @RequestParam(required = false) priceRange: Int?,
         @RequestParam(defaultValue = "false") openNow: Boolean,
         pageable: Pageable
-    ): Page<StoreDTO> {
-        return storeService.getNearbyStoresFiltered(lat, lng, radius, cuisine, priceRange, openNow, pageable)
+    ): List<StoreDTO> {
+        return storeService.getNearbyStoresFiltered(lat, lng, radius, cuisine, priceRange, openNow, pageable).content
     }
 
     @GetMapping("/stores/{id}")

@@ -24,12 +24,12 @@ class CommonLayerTests {
     @Test
     fun `ApiResponse factories produce expected envelopes`() {
         val success = ApiResponse.success("payload")
-        val error = ApiResponse.error<String>("Bad", "Details", 4000)
+        val error = ApiResponse.error<String>("Bad", "4000")
 
-        assertEquals(2000, success.code)
+        assertEquals(true, success.success)
         assertEquals("payload", success.data)
-        assertEquals(4000, error.code)
-        assertEquals("Details", error.error)
+        assertEquals(false, error.success)
+        assertEquals("4000", error.errorCode)
     }
 
     @Test
