@@ -31,6 +31,9 @@ class OrderService(
     private val objectMapper: ObjectMapper,
     private val eventPublisher: ApplicationEventPublisher
 ) {
+    private fun UUID?.required(fieldName: String): UUID =
+        this ?: throw IllegalStateException("Missing UUID for $fieldName")
+
 
     @Transactional
     fun checkout(firebaseUid: String, request: CheckoutRequest): OrderDTO {
@@ -83,8 +86,8 @@ class OrderService(
         // Publish Asynchronous Event for Notifications
         eventPublisher.publishEvent(
             OrderStatusChangedEvent(
-                orderId = savedOrder.id ?: UUID.randomUUID(),
-                userId = user.id ?: UUID.randomUUID(),
+                orderId = savedOrder.id.required("order.id"),
+                userId = user.id.required("user.id"),
                 newStatus = savedOrder.status,
                 fcmToken = user.fcmToken
             )
@@ -109,8 +112,8 @@ class OrderService(
     }
 
     private fun Order.toDTO() = OrderDTO(
-        id = id ?: UUID.randomUUID(),
-        storeId = store?.id ?: UUID.randomUUID(),
+        id = id.required("order.id"),
+        storeId = store?.id.required("order.store.id"),
         status = status,
         totalAmount = totalAmount,
         deliveryAddressSnapshot = deliveryAddressSnapshot,

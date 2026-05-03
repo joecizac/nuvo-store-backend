@@ -21,6 +21,9 @@ class CartService(
     private val userRepository: UserRepository,
     private val skuRepository: SKURepository
 ) {
+    private fun UUID?.required(fieldName: String): UUID =
+        this ?: throw IllegalStateException("Missing UUID for $fieldName")
+
 
     @Transactional
     fun getOrCreateCart(firebaseUid: String): Cart {
@@ -85,14 +88,14 @@ class CartService(
     private fun Cart.toDTO(): CartDTO {
         val itemDTOs = items.map { it.toDTO() }
         val total = itemDTOs.sumOf { it.subTotal }
-        return CartDTO(id ?: UUID.randomUUID(), store?.id, itemDTOs, total)
+        return CartDTO(id.required("cart.id"), store?.id, itemDTOs, total)
     }
 
     private fun CartItem.toDTO(): CartItemDTO {
         val price = sku.discountedPrice ?: sku.originalPrice
         return CartItemDTO(
-            id = id ?: UUID.randomUUID(),
-            skuId = sku.id ?: UUID.randomUUID(),
+            id = id.required("cartItem.id"),
+            skuId = sku.id.required("cartItem.sku.id"),
             skuName = sku.name,
             quantity = quantity,
             price = price,

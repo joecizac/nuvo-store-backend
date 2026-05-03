@@ -25,6 +25,9 @@ class CatalogService(
     private val subCategoryRepository: SubCategoryRepository,
     private val productRepository: ProductRepository
 ) {
+    private fun UUID?.required(fieldName: String): UUID =
+        this ?: throw IllegalStateException("Missing UUID for $fieldName")
+
 
     @Transactional(readOnly = true)
     @Cacheable(value = ["store_categories"], key = "#storeId")
@@ -61,14 +64,18 @@ class CatalogService(
             .toDTO()
     }
 
-    private fun Category.toDTO() = CategoryDTO(id ?: UUID.randomUUID(), name, imageUrl)
+    private fun Category.toDTO() = CategoryDTO(id.required("category.id"), name, imageUrl)
 
-    private fun SubCategory.toDTO() = SubCategoryDTO(id ?: UUID.randomUUID(), category.id ?: UUID.randomUUID(), name)
+    private fun SubCategory.toDTO() = SubCategoryDTO(
+        id.required("subCategory.id"),
+        category.id.required("subCategory.category.id"),
+        name
+    )
 
     private fun Product.toDTO() = ProductDTO(
-        id = id ?: UUID.randomUUID(),
-        storeId = store.id ?: UUID.randomUUID(),
-        subCategoryId = subCategory.id ?: UUID.randomUUID(),
+        id = id.required("product.id"),
+        storeId = store.id.required("product.store.id"),
+        subCategoryId = subCategory.id.required("product.subCategory.id"),
         name = name,
         description = description,
         imageUrl = imageUrl,
@@ -77,8 +84,8 @@ class CatalogService(
     )
 
     private fun SKU.toDTO() = SkuDTO(
-        id = id ?: UUID.randomUUID(),
-        productId = product.id ?: UUID.randomUUID(),
+        id = id.required("sku.id"),
+        productId = product.id.required("sku.product.id"),
         name = name,
         imageUrl = imageUrl,
         originalPrice = originalPrice,

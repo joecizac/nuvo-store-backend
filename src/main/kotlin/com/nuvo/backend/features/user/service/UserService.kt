@@ -19,6 +19,9 @@ class UserService(
     private val userRepository: UserRepository,
     private val addressRepository: UserAddressRepository
 ) {
+    private fun UUID?.required(fieldName: String): UUID =
+        this ?: throw IllegalStateException("Missing UUID for $fieldName")
+
 
     @Transactional
     fun syncUser(firebaseUid: String, request: SyncUserRequest): UserProfileDTO {
@@ -136,7 +139,7 @@ class UserService(
     }
 
     private fun User.toDTO() = UserProfileDTO(
-        id = id ?: UUID.randomUUID(),
+        id = id.required("user.id"),
         firebaseUid = firebaseUid,
         email = email,
         name = name,
@@ -146,7 +149,7 @@ class UserService(
     )
 
     private fun UserAddress.toDTO() = AddressDTO(
-        id = id ?: UUID.randomUUID(),
+        id = id.required("address.id"),
         title = title,
         fullAddress = fullAddress,
         latitude = location.y,

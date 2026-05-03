@@ -82,8 +82,11 @@ class StoreService(
         return storeRepository.findAllByChainId(chainId).map { it.toDTO() }
     }
 
+    private fun UUID?.required(fieldName: String): UUID =
+        this ?: throw IllegalStateException("Missing UUID for $fieldName")
+
     private fun Store.toDTO() = StoreDTO(
-        id = id ?: UUID.randomUUID(),
+        id = id.required("store.id"),
         chainId = chain?.id,
         name = name,
         description = description,
@@ -102,7 +105,7 @@ class StoreService(
     )
 
     private fun Chain.toDTO() = ChainDTO(
-        id = id ?: UUID.randomUUID(),
+        id = id.required("chain.id"),
         name = name,
         description = description,
         logoUrl = logoUrl,

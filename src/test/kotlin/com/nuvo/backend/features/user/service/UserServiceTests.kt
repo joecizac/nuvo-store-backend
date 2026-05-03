@@ -39,7 +39,18 @@ class UserServiceTests {
     @Test
     fun `syncUser creates a new profile`() {
         `when`(userRepository.findByFirebaseUid(firebaseUid)).thenReturn(null)
-        `when`(userRepository.save(any())).thenAnswer { it.arguments[0] }
+        `when`(userRepository.save(any())).thenAnswer {
+            val input = it.arguments[0] as com.nuvo.backend.features.user.domain.User
+            com.nuvo.backend.features.user.domain.User(
+                id = UUID.randomUUID(),
+                firebaseUid = input.firebaseUid,
+                email = input.email,
+                name = input.name,
+                phoneNumber = input.phoneNumber,
+                profileImageUrl = input.profileImageUrl,
+                fcmToken = input.fcmToken
+            )
+        }
 
         val dto = service.syncUser(firebaseUid, SyncUserRequest("New User", "new@example.com", "avatar.png"))
 
@@ -68,7 +79,17 @@ class UserServiceTests {
         val previousDefault = TestFixtures.address(user = user, isDefault = true)
         `when`(userRepository.findByFirebaseUid(firebaseUid)).thenReturn(user)
         `when`(addressRepository.findByUserIdAndIsDefaultTrue(user.id!!)).thenReturn(previousDefault)
-        `when`(addressRepository.save(any())).thenAnswer { it.arguments[0] }
+        `when`(addressRepository.save(any())).thenAnswer {
+            val input = it.arguments[0] as com.nuvo.backend.features.user.domain.UserAddress
+            if (input.id != null) input else com.nuvo.backend.features.user.domain.UserAddress(
+                id = UUID.randomUUID(),
+                user = input.user,
+                title = input.title,
+                fullAddress = input.fullAddress,
+                location = input.location,
+                isDefault = input.isDefault
+            )
+        }
 
         val dto = service.addAddress(firebaseUid, addressDto(isDefault = true))
 

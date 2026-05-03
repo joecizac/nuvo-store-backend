@@ -28,6 +28,9 @@ class SocialService(
     private val productRepository: ProductRepository,
     private val orderRepository: OrderRepository
 ) {
+    private fun UUID?.required(fieldName: String): UUID =
+        this ?: throw IllegalStateException("Missing UUID for $fieldName")
+
 
     @Transactional
     fun submitReview(firebaseUid: String, storeId: UUID, request: SubmitReviewRequest): ReviewDTO {
@@ -134,8 +137,8 @@ class SocialService(
     }
 
     private fun Review.toDTO() = ReviewDTO(
-        id = id ?: UUID.randomUUID(),
-        userId = user.id ?: UUID.randomUUID(),
+        id = id.required("review.id"),
+        userId = user.id.required("review.user.id"),
         userName = user.name,
         orderId = order?.id,
         rating = rating,

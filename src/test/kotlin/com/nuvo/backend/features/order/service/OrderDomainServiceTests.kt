@@ -110,7 +110,7 @@ class OrderDomainServiceTests {
 
     @Test
     fun `addItemToCart increments an existing SKU and totals discounted price`() {
-        val cart = Cart(user = user, store = storeA)
+        val cart = Cart(id = UUID.randomUUID(), user = user, store = storeA)
         cart.items.add(CartItem(id = UUID.randomUUID(), cart = cart, sku = skuA, quantity = 1))
 
         `when`(userRepository.findByFirebaseUid(firebaseUid)).thenReturn(user)
@@ -128,13 +128,27 @@ class OrderDomainServiceTests {
 
     @Test
     fun `addItemToCart enforces single-store rule by clearing old items`() {
-        val cart = Cart(user = user, store = storeA)
+        val cart = Cart(id = UUID.randomUUID(), user = user, store = storeA)
         cart.items.add(CartItem(id = UUID.randomUUID(), cart = cart, sku = skuA, quantity = 2))
 
         `when`(userRepository.findByFirebaseUid(firebaseUid)).thenReturn(user)
         `when`(cartRepository.findByUserId(user.id!!)).thenReturn(cart)
         `when`(skuRepository.findById(skuB.id!!)).thenReturn(Optional.of(skuB))
-        `when`(cartRepository.save(any())).thenAnswer { it.arguments[0] }
+        `when`(cartRepository.save(any())).thenAnswer {
+            val input = it.arguments[0] as Cart
+            val persisted = Cart(id = input.id ?: UUID.randomUUID(), user = input.user, store = input.store)
+            input.items.forEach { item ->
+                persisted.items.add(
+                    CartItem(
+                        id = item.id ?: UUID.randomUUID(),
+                        cart = persisted,
+                        sku = item.sku,
+                        quantity = item.quantity
+                    )
+                )
+            }
+            persisted
+        }
 
         val dto = cartService.addItemToCart(firebaseUid, AddToCartRequest(skuB.id!!, 1))
 
@@ -147,7 +161,7 @@ class OrderDomainServiceTests {
     @Test
     fun `updateItemQuantity removes item and clears store when quantity is zero`() {
         val itemId = UUID.randomUUID()
-        val cart = Cart(user = user, store = storeA)
+        val cart = Cart(id = UUID.randomUUID(), user = user, store = storeA)
         cart.items.add(CartItem(id = itemId, cart = cart, sku = skuA, quantity = 2))
 
         `when`(userRepository.findByFirebaseUid(firebaseUid)).thenReturn(user)
@@ -180,7 +194,7 @@ class OrderDomainServiceTests {
     @Test
     fun `checkout creates an order with totals snapshots items clears cart and publishes event`() {
         val address = address(user)
-        val cart = Cart(user = user, store = storeA)
+        val cart = Cart(id = UUID.randomUUID(), user = user, store = storeA)
         cart.items.add(CartItem(id = UUID.randomUUID(), cart = cart, sku = skuA, quantity = 2))
         cart.items.add(CartItem(id = UUID.randomUUID(), cart = cart, sku = sku(storeA, originalPrice = "5.00"), quantity = 3))
 
@@ -188,7 +202,29 @@ class OrderDomainServiceTests {
         `when`(cartRepository.findByUserId(user.id!!)).thenReturn(cart)
         `when`(cartRepository.save(any())).thenAnswer { it.arguments[0] }
         `when`(addressRepository.findById(address.id!!)).thenReturn(Optional.of(address))
-        `when`(orderRepository.save(any())).thenAnswer { it.arguments[0] }
+        `when`(orderRepository.save(any())).thenAnswer {
+            val input = it.arguments[0] as Order
+            val saved = Order(
+                id = UUID.randomUUID(),
+                user = input.user,
+                store = input.store,
+                status = input.status,
+                totalAmount = input.totalAmount,
+                deliveryAddressSnapshot = input.deliveryAddressSnapshot
+            )
+            input.items.forEach { item ->
+                saved.items.add(
+                    OrderItem(
+                        id = UUID.randomUUID(),
+                        order = saved,
+                        sku = item.sku,
+                        snapshotPrice = item.snapshotPrice,
+                        quantity = item.quantity
+                    )
+                )
+            }
+            saved
+        }
 
         val dto = orderService.checkout(firebaseUid, CheckoutRequest(address.id!!))
 
